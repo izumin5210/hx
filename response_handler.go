@@ -3,6 +3,7 @@ package hx
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 )
@@ -14,7 +15,7 @@ type ResponseError struct {
 }
 
 func (e *ResponseError) Error() string {
-	return "" // TODO
+	return fmt.Sprintf("the server responeded with status %d", e.Response.StatusCode)
 }
 
 func AsJSON(dst interface{}) ResponseHandler {
