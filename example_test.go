@@ -32,11 +32,12 @@ func ExampleGet() {
 	}
 
 	ctx := context.Background()
-	_, err := httpx.Get(
+	err := httpx.Get(
 		ctx,
 		ts.URL+"/echo",
 		httpx.WithQuery("message", "It Works!"),
-		httpx.WithResposneJSON(&out),
+		httpx.WhenOK(httpx.AsJSON(&out)),
+		httpx.WhenNotOK(httpx.AsError()),
 	)
 	if err != nil {
 		// Handle errors...

@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -228,37 +227,4 @@ func WithJSON(v interface{}) ClientOption {
 		bodyOpt(c)
 		WithHeader("Content-Type", "application/json")(c)
 	}
-}
-
-func WithBufferingResponse() ClientOption {
-	return newResponseHandler(func(c *http.Client, r *http.Response, err error) (*http.Response, error) {
-		if r == nil {
-			return r, err
-		}
-		var buf bytes.Buffer
-		_, err = buf.ReadFrom(r.Body)
-		if err != nil {
-			return r, err
-		}
-		err = r.Body.Close()
-		if err != nil {
-			return r, err
-		}
-		r.Body = ioutil.NopCloser(&buf)
-		return r, nil
-	})
-}
-
-func WithResposneJSON(dst interface{}) ClientOption {
-	return newResponseHandler(func(c *http.Client, r *http.Response, err error) (*http.Response, error) {
-		if r == nil {
-			return r, err
-		}
-		defer r.Body.Close()
-		err = json.NewDecoder(r.Body).Decode(dst)
-		if err != nil {
-			return r, err
-		}
-		return r, nil
-	})
 }

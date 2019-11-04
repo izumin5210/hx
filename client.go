@@ -2,26 +2,28 @@ package httpx
 
 import (
 	"context"
+	"io"
+	"io/ioutil"
 	"net/http"
 )
 
-func Get(ctx context.Context, url string, opts ...ClientOption) (*http.Response, error) {
+func Get(ctx context.Context, url string, opts ...ClientOption) error {
 	return NewClient().Get(ctx, url, opts...)
 }
 
-func Post(ctx context.Context, url string, opts ...ClientOption) (*http.Response, error) {
+func Post(ctx context.Context, url string, opts ...ClientOption) error {
 	return NewClient().Post(ctx, url, opts...)
 }
 
-func Put(ctx context.Context, url string, opts ...ClientOption) (*http.Response, error) {
+func Put(ctx context.Context, url string, opts ...ClientOption) error {
 	return NewClient().Put(ctx, url, opts...)
 }
 
-func Patch(ctx context.Context, url string, opts ...ClientOption) (*http.Response, error) {
+func Patch(ctx context.Context, url string, opts ...ClientOption) error {
 	return NewClient().Patch(ctx, url, opts...)
 }
 
-func Delete(ctx context.Context, url string, opts ...ClientOption) (*http.Response, error) {
+func Delete(ctx context.Context, url string, opts ...ClientOption) error {
 	return NewClient().Delete(ctx, url, opts...)
 }
 
@@ -36,32 +38,27 @@ func NewClient(opts ...ClientOption) *Client {
 	}
 }
 
-func (c *Client) Get(ctx context.Context, url string, opts ...ClientOption) (*http.Response, error) {
-	resp, err := c.request(ctx, http.MethodGet, url, opts...)
-	return resp, err
+func (c *Client) Get(ctx context.Context, url string, opts ...ClientOption) error {
+	return c.request(ctx, http.MethodGet, url, opts...)
 }
 
-func (c *Client) Post(ctx context.Context, url string, opts ...ClientOption) (*http.Response, error) {
-	resp, err := c.request(ctx, http.MethodPost, url, opts...)
-	return resp, err
+func (c *Client) Post(ctx context.Context, url string, opts ...ClientOption) error {
+	return c.request(ctx, http.MethodPost, url, opts...)
 }
 
-func (c *Client) Put(ctx context.Context, url string, opts ...ClientOption) (*http.Response, error) {
-	resp, err := c.request(ctx, http.MethodPut, url, opts...)
-	return resp, err
+func (c *Client) Put(ctx context.Context, url string, opts ...ClientOption) error {
+	return c.request(ctx, http.MethodPut, url, opts...)
 }
 
-func (c *Client) Patch(ctx context.Context, url string, opts ...ClientOption) (*http.Response, error) {
-	resp, err := c.request(ctx, http.MethodPatch, url, opts...)
-	return resp, err
+func (c *Client) Patch(ctx context.Context, url string, opts ...ClientOption) error {
+	return c.request(ctx, http.MethodPatch, url, opts...)
 }
 
-func (c *Client) Delete(ctx context.Context, url string, opts ...ClientOption) (*http.Response, error) {
-	resp, err := c.request(ctx, http.MethodDelete, url, opts...)
-	return resp, err
+func (c *Client) Delete(ctx context.Context, url string, opts ...ClientOption) error {
+	return c.request(ctx, http.MethodDelete, url, opts...)
 }
 
-func (c *Client) request(ctx context.Context, meth string, url string, opts ...ClientOption) (*http.Response, error) {
+func (c *Client) request(ctx context.Context, meth string, url string, opts ...ClientOption) error {
 	var err error
 
 	cfg := new(ClientConfig)
@@ -71,8 +68,11 @@ func (c *Client) request(ctx context.Context, meth string, url string, opts ...C
 
 	resp, err := cfg.DoRequest(ctx, meth)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return resp, nil
+	io.Copy(ioutil.Discard, resp.Body)
+	resp.Body.Close()
+
+	return nil
 }

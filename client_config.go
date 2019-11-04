@@ -12,7 +12,7 @@ type ClientConfig struct {
 	ClientOptions    []func(context.Context, *http.Client) error
 	URLOptions       []func(context.Context, *url.URL) error
 	BodyOption       func(context.Context) (io.Reader, error)
-	ResponseHandlers []func(*http.Client, *http.Response, error) (*http.Response, error)
+	ResponseHandlers []ResponseHandler
 }
 
 func (cfg *ClientConfig) Apply(opts ...ClientOption) {
