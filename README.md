@@ -51,7 +51,7 @@ type ContentAPI struct {
 func (a *ContentAPI) GetContent(ctx context.Context, id int) (*Content, error) {
 	var cont Content
 
-	err := hx.Get(ctx, fmt.Sprintf("/api/contents/%d", id),
+	err := a.client.Get(ctx, fmt.Sprintf("/api/contents/%d", id),
 		hx.WhenOK(httpx.AsJSON(&cont)),
 		hx.WhenNotOK(httpx.AsError()),
 	)
@@ -66,9 +66,9 @@ func (a *ContentAPI) GetContent(ctx context.Context, id int) (*Content, error) {
 func (a *ContentAPI) CreateContent(ctx context.Context, in *Content) (*Content, error) {
 	var out Content
 
-	err := hx.Post(ctx, fmt.Sprintf("/api/contents"),
+	err := a.client.Post(ctx, "/api/contents",
 		hx.JSON(in),
-		hx.WhenOK(httpx.AsJSON(&cont)),
+		hx.WhenOK(httpx.AsJSON(&out)),
 		hx.WhenNotOK(httpx.AsError()),
 	)
 
@@ -76,6 +76,6 @@ func (a *ContentAPI) CreateContent(ctx context.Context, in *Content) (*Content, 
 		return nil, fmt.Errorf("failed to create content: %w", err)
 	}
 
-	return &cont, nil
+	return &out, nil
 }
 ```
