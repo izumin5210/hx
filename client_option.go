@@ -10,8 +10,16 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"runtime"
 	"strings"
 	"time"
+)
+
+var (
+	DefaultUserAgent     = fmt.Sprintf("httpx/%s; %s", Version, runtime.Version())
+	DefaultClientOptions = []ClientOption{
+		UserAgent(DefaultUserAgent),
+	}
 )
 
 type ClientOption interface {
