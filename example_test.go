@@ -1,4 +1,4 @@
-package httpx_test
+package hx_test
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	"github.com/izumin5210/httpx"
+	"github.com/izumin5210/hx"
 )
 
 func ExampleGet() {
@@ -32,12 +32,12 @@ func ExampleGet() {
 	}
 
 	ctx := context.Background()
-	err := httpx.Get(
+	err := hx.Get(
 		ctx,
 		ts.URL+"/echo",
-		httpx.Query("message", "It Works!"),
-		httpx.WhenOK(httpx.AsJSON(&out)),
-		httpx.WhenNotOK(httpx.AsError()),
+		hx.Query("message", "It Works!"),
+		hx.WhenOK(httpx.AsJSON(&out)),
+		hx.WhenNotOK(httpx.AsError()),
 	)
 	if err != nil {
 		// Handle errors...

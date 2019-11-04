@@ -1,4 +1,4 @@
-package httpx
+package hx
 
 import (
 	"context"

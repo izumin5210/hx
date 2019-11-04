@@ -1,3 +1,3 @@
-module github.com/izumin5210/httpx
+module github.com/izumin5210/hx
 
 go 1.13

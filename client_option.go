@@ -1,4 +1,4 @@
-package httpx
+package hx
 
 import (
 	"bytes"
@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	DefaultUserAgent     = fmt.Sprintf("httpx/%s; %s", Version, runtime.Version())
+	DefaultUserAgent     = fmt.Sprintf("hx/%s; %s", Version, runtime.Version())
 	DefaultClientOptions = []ClientOption{
 		UserAgent(DefaultUserAgent),
 	}
