@@ -17,7 +17,7 @@ type ClientConfig struct {
 
 func (cfg *ClientConfig) Apply(opts ...ClientOption) {
 	for _, f := range opts {
-		f(cfg)
+		f.Apply(cfg)
 	}
 }
 

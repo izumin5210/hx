@@ -14,40 +14,54 @@ import (
 	"time"
 )
 
-type ClientOption func(*ClientConfig)
+type ClientOption interface {
+	Apply(*ClientConfig)
+}
+
+type ClientOptionFunc func(*ClientConfig)
+
+func (f ClientOptionFunc) Apply(c *ClientConfig) { f(c) }
+
+func combineClientOptions(opts ...ClientOption) ClientOption {
+	return ClientOptionFunc(func(c *ClientConfig) {
+		for _, o := range opts {
+			o.Apply(c)
+		}
+	})
+}
 
 func newRequestOption(f func(context.Context, *http.Request) error) ClientOption {
-	return func(c *ClientConfig) {
+	return ClientOptionFunc(func(c *ClientConfig) {
 		c.RequestOptions = append(c.RequestOptions, f)
-	}
+	})
 }
 
 func newURLOption(f func(context.Context, *url.URL) error) ClientOption {
-	return func(c *ClientConfig) {
+	return ClientOptionFunc(func(c *ClientConfig) {
 		c.URLOptions = append(c.URLOptions, f)
-	}
+	})
 }
 
 func newClientOption(f func(context.Context, *http.Client) error) ClientOption {
-	return func(c *ClientConfig) {
+	return ClientOptionFunc(func(c *ClientConfig) {
 		c.ClientOptions = append(c.ClientOptions, f)
-	}
+	})
 }
 
 func newBodyOption(f func(context.Context) (io.Reader, error)) ClientOption {
-	return func(c *ClientConfig) {
+	return ClientOptionFunc(func(c *ClientConfig) {
 		c.BodyOption = f
-	}
+	})
 }
 
 func setBodyOption(r io.Reader) ClientOption {
 	return newBodyOption(func(context.Context) (io.Reader, error) { return r, nil })
 }
 
-func newResponseHandler(f func(*http.Client, *http.Response, error) (*http.Response, error)) ClientOption {
-	return func(c *ClientConfig) {
+func newResponseHandler(f ResponseHandler) ClientOption {
+	return ClientOptionFunc(func(c *ClientConfig) {
 		c.ResponseHandlers = append(c.ResponseHandlers, f)
-	}
+	})
 }
 
 func WithBaseURL(baseURL *url.URL) ClientOption {
@@ -141,21 +155,21 @@ func WithBody(v interface{}) ClientOption {
 	case []byte:
 		return setBodyOption(bytes.NewReader(v))
 	case url.Values:
-		return func(c *ClientConfig) {
-			setBodyOption(strings.NewReader(v.Encode()))(c)
-			WithHeader("Content-Type", "application/x-www-form-urlencoded")(c)
-		}
+		return combineClientOptions(
+			setBodyOption(strings.NewReader(v.Encode())),
+			WithHeader("Content-Type", "application/x-www-form-urlencoded"),
+		)
 	case json.Marshaler:
-		return func(c *ClientConfig) {
+		return combineClientOptions(
 			newBodyOption(func(context.Context) (io.Reader, error) {
 				data, err := v.MarshalJSON()
 				if err != nil {
 					return nil, err
 				}
 				return bytes.NewReader(data), nil
-			})(c)
-			WithHeader("Content-Type", "application/json")(c)
-		}
+			}),
+			WithHeader("Content-Type", "application/json"),
+		)
 	case encoding.TextMarshaler:
 		return newBodyOption(func(context.Context) (io.Reader, error) {
 			data, err := v.MarshalText()
@@ -196,10 +210,10 @@ func WithFormBody(v interface{}) ClientOption {
 			})
 		}
 	}()
-	return func(c *ClientConfig) {
-		bodyOpt(c)
-		WithHeader("Content-Type", "application/x-www-form-urlencoded")(c)
-	}
+	return combineClientOptions(
+		bodyOpt,
+		WithHeader("Content-Type", "application/x-www-form-urlencoded"),
+	)
 }
 
 // WithJSON sets data to request body as json.
@@ -223,8 +237,8 @@ func WithJSON(v interface{}) ClientOption {
 			})
 		}
 	}()
-	return func(c *ClientConfig) {
-		bodyOpt(c)
-		WithHeader("Content-Type", "application/json")(c)
-	}
+	return combineClientOptions(
+		bodyOpt,
+		WithHeader("Content-Type", "application/json"),
+	)
 }
