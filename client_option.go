@@ -64,14 +64,14 @@ func newResponseHandler(f ResponseHandler) ClientOption {
 	})
 }
 
-func WithBaseURL(baseURL *url.URL) ClientOption {
+func BaseURL(baseURL *url.URL) ClientOption {
 	return newURLOption(func(_ context.Context, dest *url.URL) error {
 		*dest = *baseURL
 		return nil
 	})
 }
 
-func WithURL(urlStr string) ClientOption {
+func URL(urlStr string) ClientOption {
 	return newURLOption(func(_ context.Context, base *url.URL) error {
 		parse := url.Parse
 		if base != nil {
@@ -86,29 +86,29 @@ func WithURL(urlStr string) ClientOption {
 	})
 }
 
-// WithBasicAuth sets an username and a password for basic authentication.
-func WithBasicAuth(username, password string) ClientOption {
+// BasicAuth sets an username and a password for basic authentication.
+func BasicAuth(username, password string) ClientOption {
 	return newRequestOption(func(_ context.Context, req *http.Request) error {
 		req.SetBasicAuth(username, password)
 		return nil
 	})
 }
 
-// WithHeader sets a value to request header.
-func WithHeader(k, v string) ClientOption {
+// Header sets a value to request header.
+func Header(k, v string) ClientOption {
 	return newRequestOption(func(_ context.Context, req *http.Request) error {
 		req.Header.Set(k, v)
 		return nil
 	})
 }
 
-// WithAuthorization sets an authorization scheme and a token of an user.
-func WithAuthorization(scheme, token string) ClientOption {
-	return WithHeader("Authorization", scheme+" "+token)
+// Authorization sets an authorization scheme and a token of an user.
+func Authorization(scheme, token string) ClientOption {
+	return Header("Authorization", scheme+" "+token)
 }
 
-// WithQuery sets an url query parameter.
-func WithQuery(k, v string) ClientOption {
+// Query sets an url query parameter.
+func Query(k, v string) ClientOption {
 	return newURLOption(func(_ context.Context, u *url.URL) error {
 		q := u.Query()
 		q.Set(k, v)
@@ -117,36 +117,36 @@ func WithQuery(k, v string) ClientOption {
 	})
 }
 
-// WithHTTPClient sets a HTTP client that used to send HTTP request(s).
-func WithHTTPClient(cli *http.Client) ClientOption {
+// HTTPClient sets a HTTP client that used to send HTTP request(s).
+func HTTPClient(cli *http.Client) ClientOption {
 	return newClientOption(func(_ context.Context, dest *http.Client) error {
 		*dest = *cli
 		return nil
 	})
 }
 
-// WithTransport sets the round tripper to http.Client.
-func WithTransport(f func(context.Context, http.RoundTripper) http.RoundTripper) ClientOption {
+// Transport sets the round tripper to http.Client.
+func Transport(f func(context.Context, http.RoundTripper) http.RoundTripper) ClientOption {
 	return newClientOption(func(ctx context.Context, cli *http.Client) error {
 		cli.Transport = f(ctx, cli.Transport)
 		return nil
 	})
 }
 
-// WithTimeout sets the max duration for http request(s).
-func WithTimeout(t time.Duration) ClientOption {
+// Timeout sets the max duration for http request(s).
+func Timeout(t time.Duration) ClientOption {
 	return newClientOption(func(_ context.Context, cli *http.Client) error {
 		cli.Timeout = t
 		return nil
 	})
 }
 
-func WithUserAgent(ua string) ClientOption {
-	return WithHeader("User-Agent", ua)
+func UserAgent(ua string) ClientOption {
+	return Header("User-Agent", ua)
 }
 
-// WithBody sets data to request body.
-func WithBody(v interface{}) ClientOption {
+// Body sets data to request body.
+func Body(v interface{}) ClientOption {
 	switch v := v.(type) {
 	case io.Reader:
 		return setBodyOption(v)
@@ -157,7 +157,7 @@ func WithBody(v interface{}) ClientOption {
 	case url.Values:
 		return combineClientOptions(
 			setBodyOption(strings.NewReader(v.Encode())),
-			WithHeader("Content-Type", "application/x-www-form-urlencoded"),
+			Header("Content-Type", "application/x-www-form-urlencoded"),
 		)
 	case json.Marshaler:
 		return combineClientOptions(
@@ -168,7 +168,7 @@ func WithBody(v interface{}) ClientOption {
 				}
 				return bytes.NewReader(data), nil
 			}),
-			WithHeader("Content-Type", "application/json"),
+			Header("Content-Type", "application/json"),
 		)
 	case encoding.TextMarshaler:
 		return newBodyOption(func(context.Context) (io.Reader, error) {
@@ -192,8 +192,8 @@ func WithBody(v interface{}) ClientOption {
 	}
 }
 
-// WithFormBody sets data to request body as formm.
-func WithFormBody(v interface{}) ClientOption {
+// FormBody sets data to request body as formm.
+func FormBody(v interface{}) ClientOption {
 	bodyOpt := func() ClientOption {
 		switch v := v.(type) {
 		case io.Reader:
@@ -212,12 +212,12 @@ func WithFormBody(v interface{}) ClientOption {
 	}()
 	return combineClientOptions(
 		bodyOpt,
-		WithHeader("Content-Type", "application/x-www-form-urlencoded"),
+		Header("Content-Type", "application/x-www-form-urlencoded"),
 	)
 }
 
-// WithJSON sets data to request body as json.
-func WithJSON(v interface{}) ClientOption {
+// JSON sets data to request body as json.
+func JSON(v interface{}) ClientOption {
 	bodyOpt := func() ClientOption {
 		switch v := v.(type) {
 		case io.Reader:
@@ -239,6 +239,6 @@ func WithJSON(v interface{}) ClientOption {
 	}()
 	return combineClientOptions(
 		bodyOpt,
-		WithHeader("Content-Type", "application/json"),
+		Header("Content-Type", "application/json"),
 	)
 }

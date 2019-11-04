@@ -35,7 +35,7 @@ func ExampleGet() {
 	err := httpx.Get(
 		ctx,
 		ts.URL+"/echo",
-		httpx.WithQuery("message", "It Works!"),
+		httpx.Query("message", "It Works!"),
 		httpx.WhenOK(httpx.AsJSON(&out)),
 		httpx.WhenNotOK(httpx.AsError()),
 	)

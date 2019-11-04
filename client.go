@@ -63,7 +63,7 @@ func (c *Client) request(ctx context.Context, meth string, url string, opts ...C
 
 	cfg := new(ClientConfig)
 	cfg.Apply(c.opts...)
-	cfg.Apply(WithURL(url))
+	cfg.Apply(URL(url))
 	cfg.Apply(opts...)
 
 	resp, err := cfg.DoRequest(ctx, meth)
