@@ -15,33 +15,39 @@ import (
 	"time"
 )
 
-type ClientOption func(*ClientConfig) error
+type ClientOption func(*ClientConfig)
 
 func newRequestOption(f func(context.Context, *http.Request) error) ClientOption {
-	return func(c *ClientConfig) error {
+	return func(c *ClientConfig) {
 		c.RequestOptions = append(c.RequestOptions, f)
-		return nil
 	}
 }
 
 func newURLOption(f func(context.Context, *url.URL) error) ClientOption {
-	return func(c *ClientConfig) error {
+	return func(c *ClientConfig) {
 		c.URLOptions = append(c.URLOptions, f)
-		return nil
 	}
 }
 
 func newClientOption(f func(context.Context, *http.Client) error) ClientOption {
-	return func(c *ClientConfig) error {
+	return func(c *ClientConfig) {
 		c.ClientOptions = append(c.ClientOptions, f)
-		return nil
 	}
 }
 
+func newBodyOption(f func(context.Context) (io.Reader, error)) ClientOption {
+	return func(c *ClientConfig) {
+		c.BodyOption = f
+	}
+}
+
+func setBodyOption(r io.Reader) ClientOption {
+	return newBodyOption(func(context.Context) (io.Reader, error) { return r, nil })
+}
+
 func newResponseHandler(f func(*http.Client, *http.Response, error) (*http.Response, error)) ClientOption {
-	return func(c *ClientConfig) error {
+	return func(c *ClientConfig) {
 		c.ResponseHandlers = append(c.ResponseHandlers, f)
-		return nil
 	}
 }
 
@@ -128,84 +134,99 @@ func WithUserAgent(ua string) ClientOption {
 
 // WithBody sets data to request body.
 func WithBody(v interface{}) ClientOption {
-	return func(c *ClientConfig) error {
-		switch v := v.(type) {
-		case io.Reader:
-			c.Body = v
-		case string:
-			c.Body = strings.NewReader(v)
-		case []byte:
-			c.Body = bytes.NewReader(v)
-		case url.Values:
-			c.Body = strings.NewReader(v.Encode())
+	switch v := v.(type) {
+	case io.Reader:
+		return setBodyOption(v)
+	case string:
+		return setBodyOption(strings.NewReader(v))
+	case []byte:
+		return setBodyOption(bytes.NewReader(v))
+	case url.Values:
+		return func(c *ClientConfig) {
+			setBodyOption(strings.NewReader(v.Encode()))(c)
 			WithHeader("Content-Type", "application/x-www-form-urlencoded")(c)
-		case json.Marshaler:
-			data, err := v.MarshalJSON()
-			if err != nil {
-				return err
-			}
-			c.Body = bytes.NewReader(data)
+		}
+	case json.Marshaler:
+		return func(c *ClientConfig) {
+			newBodyOption(func(context.Context) (io.Reader, error) {
+				data, err := v.MarshalJSON()
+				if err != nil {
+					return nil, err
+				}
+				return bytes.NewReader(data), nil
+			})(c)
 			WithHeader("Content-Type", "application/json")(c)
-		case encoding.TextMarshaler:
+		}
+	case encoding.TextMarshaler:
+		return newBodyOption(func(context.Context) (io.Reader, error) {
 			data, err := v.MarshalText()
 			if err != nil {
-				return err
+				return nil, err
 			}
-			c.Body = bytes.NewReader(data)
-		case fmt.Stringer:
-			c.Body = strings.NewReader(v.String())
-		default:
+			return bytes.NewReader(data), nil
+		})
+	case fmt.Stringer:
+		return setBodyOption(strings.NewReader(v.String()))
+	default:
+		return newBodyOption(func(context.Context) (io.Reader, error) {
 			var buf bytes.Buffer
 			err := json.NewEncoder(&buf).Encode(v)
 			if err != nil {
-				return err
+				return nil, err
 			}
-			c.Body = &buf
-		}
-		return nil
+			return &buf, nil
+		})
 	}
 }
 
 // WithFormBody sets data to request body as formm.
 func WithFormBody(v interface{}) ClientOption {
-	return func(c *ClientConfig) error {
+	bodyOpt := func() ClientOption {
 		switch v := v.(type) {
 		case io.Reader:
-			c.Body = v
+			return setBodyOption(v)
 		case string:
-			c.Body = strings.NewReader(v)
+			return setBodyOption(strings.NewReader(v))
 		case []byte:
-			c.Body = bytes.NewReader(v)
+			return setBodyOption(bytes.NewReader(v))
 		case url.Values:
-			c.Body = strings.NewReader(v.Encode())
+			return setBodyOption(strings.NewReader(v.Encode()))
 		default:
-			return errors.New("failed to encoding request body")
+			return newBodyOption(func(context.Context) (io.Reader, error) {
+				return nil, errors.New("failed to encoding request body")
+			})
 		}
+	}()
+	return func(c *ClientConfig) {
+		bodyOpt(c)
 		WithHeader("Content-Type", "application/x-www-form-urlencoded")(c)
-		return nil
 	}
 }
 
 // WithJSON sets data to request body as json.
 func WithJSON(v interface{}) ClientOption {
-	return func(c *ClientConfig) error {
+	bodyOpt := func() ClientOption {
 		switch v := v.(type) {
 		case io.Reader:
-			c.Body = v
+			return setBodyOption(v)
 		case string:
-			c.Body = strings.NewReader(v)
+			return setBodyOption(strings.NewReader(v))
 		case []byte:
-			c.Body = bytes.NewReader(v)
+			return setBodyOption(bytes.NewReader(v))
 		default:
-			var buf bytes.Buffer
-			err := json.NewEncoder(&buf).Encode(v)
-			if err != nil {
-				return err
-			}
-			c.Body = &buf
+			return newBodyOption(func(context.Context) (io.Reader, error) {
+				var buf bytes.Buffer
+				err := json.NewEncoder(&buf).Encode(v)
+				if err != nil {
+					return nil, err
+				}
+				return &buf, nil
+			})
 		}
+	}()
+	return func(c *ClientConfig) {
+		bodyOpt(c)
 		WithHeader("Content-Type", "application/json")(c)
-		return nil
 	}
 }
 

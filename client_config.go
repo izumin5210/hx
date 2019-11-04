@@ -11,27 +11,28 @@ type ClientConfig struct {
 	RequestOptions   []func(context.Context, *http.Request) error
 	ClientOptions    []func(context.Context, *http.Client) error
 	URLOptions       []func(context.Context, *url.URL) error
-	Body             io.Reader
+	BodyOption       func(context.Context) (io.Reader, error)
 	ResponseHandlers []func(*http.Client, *http.Response, error) (*http.Response, error)
 }
 
-func (cfg *ClientConfig) apply(opts ...ClientOption) error {
+func (cfg *ClientConfig) Apply(opts ...ClientOption) {
 	for _, f := range opts {
-		err := f(cfg)
-		if err != nil {
-			return err
-		}
+		f(cfg)
 	}
-	return nil
 }
 
-func (cfg *ClientConfig) do(ctx context.Context, meth string) (*http.Response, error) {
+func (cfg *ClientConfig) DoRequest(ctx context.Context, meth string) (*http.Response, error) {
 	url, err := cfg.buildURL(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := cfg.buildRequest(ctx, url, meth)
+	body, err := cfg.buildBody(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := cfg.buildRequest(ctx, url, meth, body)
 	if err != nil {
 		return nil, err
 	}
@@ -63,8 +64,20 @@ func (cfg *ClientConfig) buildURL(ctx context.Context) (*url.URL, error) {
 	return u, nil
 }
 
-func (cfg *ClientConfig) buildRequest(ctx context.Context, url *url.URL, method string) (*http.Request, error) {
-	req, err := http.NewRequestWithContext(ctx, method, url.String(), cfg.Body)
+func (cfg *ClientConfig) buildBody(ctx context.Context) (io.Reader, error) {
+	f := cfg.BodyOption
+	if f == nil {
+		return nil, nil
+	}
+	body, err := cfg.BodyOption(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return body, nil
+}
+
+func (cfg *ClientConfig) buildRequest(ctx context.Context, url *url.URL, method string, body io.Reader) (*http.Request, error) {
+	req, err := http.NewRequestWithContext(ctx, method, url.String(), body)
 	if err != nil {
 		return nil, err
 	}

@@ -65,20 +65,11 @@ func (c *Client) request(ctx context.Context, meth string, url string, opts ...C
 	var err error
 
 	cfg := new(ClientConfig)
-	err = cfg.apply(c.opts...)
-	if err != nil {
-		return nil, err
-	}
-	err = WithURL(url)(cfg)
-	if err != nil {
-		return nil, err
-	}
-	err = cfg.apply(opts...)
-	if err != nil {
-		return nil, err
-	}
+	cfg.Apply(c.opts...)
+	cfg.Apply(WithURL(url))
+	cfg.Apply(opts...)
 
-	resp, err := cfg.do(ctx, meth)
+	resp, err := cfg.DoRequest(ctx, meth)
 	if err != nil {
 		return nil, err
 	}
