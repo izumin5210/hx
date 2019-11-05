@@ -82,7 +82,7 @@ type ContentAPI struct {
 func (a *ContentAPI) GetContent(ctx context.Context, id int) (*Content, error) {
 	var cont Content
 
-	err := a.client.Get(ctx, fmt.Sprintf("/api/contents/%d", id),
+	err := a.client.Get(ctx, hx.Path("api", "contents", id),
 		hx.WhenOK(hx.AsJSON(&cont)),
 		hx.WhenNotOK(hx.AsError()),
 	)

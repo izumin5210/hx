@@ -1,10 +1,8 @@
 package hx
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -43,20 +41,6 @@ func AsError() ResponseHandler {
 		}
 		return r, &ResponseError{Response: r}
 	}
-}
-
-func bufferAndCloseResponse(r *http.Response) error {
-	var buf bytes.Buffer
-	_, err := buf.ReadFrom(r.Body)
-	if err != nil {
-		return err
-	}
-	err = r.Body.Close()
-	if err != nil {
-		return err
-	}
-	r.Body = ioutil.NopCloser(&buf)
-	return nil
 }
 
 func checkStatus(f func(int) bool) func(*http.Response, error) bool {
