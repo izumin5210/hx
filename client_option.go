@@ -38,12 +38,6 @@ func CombineClientOptions(opts ...ClientOption) ClientOption {
 	})
 }
 
-func newRequestOption(f func(context.Context, *http.Request) error) ClientOption {
-	return ClientOptionFunc(func(c *ClientConfig) {
-		c.RequestOptions = append(c.RequestOptions, f)
-	})
-}
-
 func newURLOption(f func(context.Context, *url.URL) error) ClientOption {
 	return ClientOptionFunc(func(c *ClientConfig) {
 		c.URLOptions = append(c.URLOptions, f)
@@ -66,10 +60,8 @@ func setBodyOption(r io.Reader) ClientOption {
 	return newBodyOption(func(context.Context) (io.Reader, error) { return r, nil })
 }
 
-func newResponseHandler(f ResponseHandler) ClientOption {
-	return ClientOptionFunc(func(c *ClientConfig) {
-		c.ResponseHandlers = append(c.ResponseHandlers, f)
-	})
+func WithInterceptors(i ...Interceptor) ClientOption {
+	return ClientOptionFunc(func(c *ClientConfig) { c.Interceptors = append(c.Interceptors, i...) })
 }
 
 func BaseURL(baseURL *url.URL) ClientOption {
@@ -92,27 +84,6 @@ func URL(urlStr string) ClientOption {
 		*base = *newURL
 		return nil
 	})
-}
-
-// BasicAuth sets an username and a password for basic authentication.
-func BasicAuth(username, password string) ClientOption {
-	return newRequestOption(func(_ context.Context, req *http.Request) error {
-		req.SetBasicAuth(username, password)
-		return nil
-	})
-}
-
-// Header sets a value to request header.
-func Header(k, v string) ClientOption {
-	return newRequestOption(func(_ context.Context, req *http.Request) error {
-		req.Header.Set(k, v)
-		return nil
-	})
-}
-
-// Authorization sets an authorization scheme and a token of an user.
-func Authorization(scheme, token string) ClientOption {
-	return Header("Authorization", scheme+" "+token)
 }
 
 // Query sets an url query parameter.
@@ -147,6 +118,27 @@ func Timeout(t time.Duration) ClientOption {
 		cli.Timeout = t
 		return nil
 	})
+}
+
+// BasicAuth sets an username and a password for basic authentication.
+func BasicAuth(username, password string) ClientOption {
+	return WithInterceptors(func(c *http.Client, r *http.Request, h Handler) (*http.Response, error) {
+		r.SetBasicAuth(username, password)
+		return h(c, r)
+	})
+}
+
+// Header sets a value to request header.
+func Header(k, v string) ClientOption {
+	return WithInterceptors(func(c *http.Client, r *http.Request, h Handler) (*http.Response, error) {
+		r.Header.Set(k, v)
+		return h(c, r)
+	})
+}
+
+// Authorization sets an authorization scheme and a token of an user.
+func Authorization(scheme, token string) ClientOption {
+	return Header("Authorization", scheme+" "+token)
 }
 
 func UserAgent(ua string) ClientOption {

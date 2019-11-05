@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-type ResponseHandler func(*http.Client, *http.Request, *http.Response, error) (*http.Response, error)
+type ResponseHandler func(*http.Response, error) (*http.Response, error)
 
 type ResponseError struct {
 	Response *http.Response
@@ -17,7 +17,7 @@ func (e *ResponseError) Error() string {
 }
 
 func AsJSON(dst interface{}) ResponseHandler {
-	return func(_ *http.Client, _ *http.Request, r *http.Response, err error) (*http.Response, error) {
+	return func(r *http.Response, err error) (*http.Response, error) {
 		if r == nil {
 			return r, err
 		}
@@ -31,7 +31,7 @@ func AsJSON(dst interface{}) ResponseHandler {
 }
 
 func AsError() ResponseHandler {
-	return func(_ *http.Client, _ *http.Request, r *http.Response, err error) (*http.Response, error) {
+	return func(r *http.Response, err error) (*http.Response, error) {
 		if r == nil || err != nil {
 			return r, err
 		}
@@ -81,10 +81,11 @@ func IsStatus(codes ...int) ResponseHandlerCond {
 	return checkStatus(func(code int) bool { _, ok := m[code]; return ok })
 }
 
-func When(cond ResponseHandlerCond, h ResponseHandler) ClientOption {
-	return newResponseHandler(func(c *http.Client, req *http.Request, resp *http.Response, err error) (*http.Response, error) {
+func When(cond ResponseHandlerCond, rh ResponseHandler) ClientOption {
+	return WithInterceptors(func(cli *http.Client, req *http.Request, h Handler) (*http.Response, error) {
+		resp, err := h(cli, req)
 		if cond(resp, err) {
-			return h(c, req, resp, err)
+			return rh(resp, err)
 		}
 		return resp, err
 	})
