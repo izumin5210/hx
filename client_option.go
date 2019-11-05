@@ -105,9 +105,17 @@ func HTTPClient(cli *http.Client) ClientOption {
 }
 
 // Transport sets the round tripper to http.Client.
-func Transport(f func(context.Context, http.RoundTripper) http.RoundTripper) ClientOption {
+func Transport(rt http.RoundTripper) ClientOption {
 	return newClientOption(func(ctx context.Context, cli *http.Client) error {
-		cli.Transport = f(ctx, cli.Transport)
+		cli.Transport = rt
+		return nil
+	})
+}
+
+// TransportFrom sets the round tripper to http.Client.
+func TransportFrom(f func(http.RoundTripper) http.RoundTripper) ClientOption {
+	return newClientOption(func(ctx context.Context, cli *http.Client) error {
+		cli.Transport = f(cli.Transport)
 		return nil
 	})
 }

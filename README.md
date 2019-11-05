@@ -57,10 +57,8 @@ func init() {
 	hx.DefaultClientOptions = append(
 		hx.DefaultClientOptions,
 		hx.UserAgent(fmt.Sprintf("yourapp (%s)", hx.DefaultUserAgent)),
-		hx.Transport(func(_ context.Context, _ http.RoundTripper) http.RoundTripper {
-			return defaultTransport
-		}),
-		hx.Transport(func(_ context.Context, rt http.RoundTripper) http.RoundTripper {
+		hx.Transport(defaultTransport),
+		hx.TransportFrom(func(rt http.RoundTripper) http.RoundTripper {
 			return &ochttp.Transport{Base: rt}
 		}),
 	)
