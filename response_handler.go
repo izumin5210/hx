@@ -67,10 +67,23 @@ func checkStatus(f func(int) bool) func(*http.Response, error) bool {
 
 type ResponseHandlerCond func(*http.Response, error) bool
 
-func IsOK() ResponseHandlerCond { return checkStatus(func(c int) bool { return c/100 == 2 }) }
-func IsNotOK() ResponseHandlerCond {
-	return func(r *http.Response, err error) bool { return !IsOK()(r, err) }
+func Any(conds ...ResponseHandlerCond) ResponseHandlerCond {
+	return func(r *http.Response, err error) bool {
+		for _, c := range conds {
+			if c(r, err) {
+				return true
+			}
+		}
+		return false
+	}
 }
+
+func Not(cond ResponseHandlerCond) ResponseHandlerCond {
+	return func(r *http.Response, err error) bool { return !cond(r, err) }
+}
+
+func IsOK() ResponseHandlerCond          { return checkStatus(func(c int) bool { return c/100 == 2 }) }
+func IsNotOK() ResponseHandlerCond       { return Not(IsOK()) }
 func IsClientError() ResponseHandlerCond { return checkStatus(func(c int) bool { return c/100 == 4 }) }
 func IsServerError() ResponseHandlerCond { return checkStatus(func(c int) bool { return c/100 == 5 }) }
 func IsNetworkError() ResponseHandlerCond {
@@ -82,17 +95,6 @@ func IsStatus(codes ...int) ResponseHandlerCond {
 		m[c] = struct{}{}
 	}
 	return checkStatus(func(code int) bool { _, ok := m[code]; return ok })
-}
-
-func Any(conds ...ResponseHandlerCond) ResponseHandlerCond {
-	return func(r *http.Response, err error) bool {
-		for _, c := range conds {
-			if c(r, err) {
-				return true
-			}
-		}
-		return false
-	}
 }
 
 func When(cond ResponseHandlerCond, h ResponseHandler) ClientOption {
