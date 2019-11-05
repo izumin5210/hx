@@ -9,16 +9,14 @@ import (
 	"github.com/izumin5210/hx"
 )
 
-func When(cond hx.ResponseHandlerCond, newBackOff NewBackOff) hx.ClientOption {
+func When(cond hx.ResponseHandlerCond, bo backoff.BackOff) hx.ClientOption {
 	return hx.CombineClientOptions(
 		IdempotencyKey(),
 		hx.Transport(func(_ context.Context, t http.RoundTripper) http.RoundTripper {
-			return NewTransport(t, cond, newBackOff)
+			return NewTransport(t, cond, bo)
 		}),
 	)
 }
-
-type NewBackOff func() backoff.BackOff
 
 func IdempotencyKey() hx.ClientOption {
 	return hx.ClientOptionFunc(func(c *hx.ClientConfig) {

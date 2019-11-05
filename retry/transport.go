@@ -11,9 +11,9 @@ import (
 )
 
 type Transport struct {
-	parent     http.RoundTripper
-	cond       hx.ResponseHandlerCond
-	newBackOff NewBackOff
+	parent http.RoundTripper
+	cond   hx.ResponseHandlerCond
+	bo     backoff.BackOff
 }
 
 var _ http.RoundTripper = (*Transport)(nil)
@@ -21,18 +21,18 @@ var _ http.RoundTripper = (*Transport)(nil)
 func NewTransport(
 	parent http.RoundTripper,
 	cond hx.ResponseHandlerCond,
-	newBackOff NewBackOff,
+	bo backoff.BackOff,
 ) *Transport {
 	return &Transport{
-		parent:     parent,
-		cond:       cond,
-		newBackOff: newBackOff,
+		parent: parent,
+		cond:   cond,
+		bo:     bo,
 	}
 }
 
 func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
-	bo := t.newBackOff()
-	bo = backoff.WithContext(bo, req.Context())
+	bo := backoff.WithContext(t.bo, req.Context())
+	bo.Reset()
 
 	if req.Body != nil {
 		var buf bytes.Buffer
