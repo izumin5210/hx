@@ -10,21 +10,33 @@ type ResponseHandler func(*http.Response, error) (*http.Response, error)
 
 type ResponseError struct {
 	Response *http.Response
+	err      error
 }
 
 func (e *ResponseError) Error() string {
-	return fmt.Sprintf("the server responeded with status %d", e.Response.StatusCode)
+	msg := fmt.Sprintf("the server responeded with status %d", e.Response.StatusCode)
+	if e.err != nil {
+		msg = fmt.Sprintf("%s: %s", msg, e.err.Error())
+	}
+	return msg
+}
+
+func (e *ResponseError) Unwrap() error {
+	if e.err != nil {
+		return e.err
+	}
+	return e
 }
 
 func AsJSON(dst interface{}) ResponseHandler {
 	return func(r *http.Response, err error) (*http.Response, error) {
-		if r == nil {
+		if r == nil || err == nil {
 			return r, err
 		}
 		defer r.Body.Close()
 		err = json.NewDecoder(r.Body).Decode(dst)
 		if err != nil {
-			return r, err
+			return nil, &ResponseError{Response: r, err: err}
 		}
 		return r, nil
 	}
@@ -37,7 +49,7 @@ func AsError() ResponseHandler {
 		}
 		err = bufferAndCloseResponse(r)
 		if err != nil {
-			return r, err
+			return nil, &ResponseError{Response: r, err: err}
 		}
 		return r, &ResponseError{Response: r}
 	}
