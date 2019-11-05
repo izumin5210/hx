@@ -16,8 +16,8 @@ var cont Content
 
 ctx := context.Background()
 err := hx.Get(ctx, "https://api.example.com/contents/1",
-	hx.WhenOK(httpx.AsJSON(&cont)),
-	hx.WhenNotOK(httpx.AsError()),
+	hx.WhenOK(hx.AsJSON(&cont)),
+	hx.WhenNotOK(hx.AsError()),
 )
 ```
 
