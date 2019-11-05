@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-type ResponseHandler func(*http.Client, *http.Response, error) (*http.Response, error)
+type ResponseHandler func(*http.Client, *http.Request, *http.Response, error) (*http.Response, error)
 
 type ResponseError struct {
 	Response *http.Response
@@ -19,7 +19,7 @@ func (e *ResponseError) Error() string {
 }
 
 func AsJSON(dst interface{}) ResponseHandler {
-	return func(c *http.Client, r *http.Response, err error) (*http.Response, error) {
+	return func(_ *http.Client, _ *http.Request, r *http.Response, err error) (*http.Response, error) {
 		if r == nil {
 			return r, err
 		}
@@ -33,7 +33,7 @@ func AsJSON(dst interface{}) ResponseHandler {
 }
 
 func AsError() ResponseHandler {
-	return func(c *http.Client, r *http.Response, err error) (*http.Response, error) {
+	return func(_ *http.Client, _ *http.Request, r *http.Response, err error) (*http.Response, error) {
 		if r == nil || err != nil {
 			return r, err
 		}
@@ -62,11 +62,11 @@ func bufferAndCloseResponse(r *http.Response) error {
 type respHandlerCond func(*http.Response, error) bool
 
 func newRespHandlerWithCond(f ResponseHandler, cond respHandlerCond) ClientOption {
-	return newResponseHandler(func(c *http.Client, r *http.Response, err error) (*http.Response, error) {
-		if cond(r, err) {
-			return f(c, r, err)
+	return newResponseHandler(func(c *http.Client, req *http.Request, resp *http.Response, err error) (*http.Response, error) {
+		if cond(resp, err) {
+			return f(c, req, resp, err)
 		}
-		return r, err
+		return resp, err
 	})
 }
 

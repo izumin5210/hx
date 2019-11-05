@@ -45,7 +45,7 @@ func (cfg *ClientConfig) DoRequest(ctx context.Context, meth string) (*http.Resp
 	resp, err := cli.Do(req)
 
 	for _, h := range cfg.ResponseHandlers {
-		resp, err = h(cli, resp, err)
+		resp, err = h(cli, req, resp, err)
 	}
 
 	return resp, err
