@@ -30,7 +30,7 @@ type ClientOptionFunc func(*ClientConfig)
 
 func (f ClientOptionFunc) Apply(c *ClientConfig) { f(c) }
 
-func combineClientOptions(opts ...ClientOption) ClientOption {
+func CombineClientOptions(opts ...ClientOption) ClientOption {
 	return ClientOptionFunc(func(c *ClientConfig) {
 		for _, o := range opts {
 			o.Apply(c)
@@ -163,12 +163,12 @@ func Body(v interface{}) ClientOption {
 	case []byte:
 		return setBodyOption(bytes.NewReader(v))
 	case url.Values:
-		return combineClientOptions(
+		return CombineClientOptions(
 			setBodyOption(strings.NewReader(v.Encode())),
 			Header("Content-Type", "application/x-www-form-urlencoded"),
 		)
 	case json.Marshaler:
-		return combineClientOptions(
+		return CombineClientOptions(
 			newBodyOption(func(context.Context) (io.Reader, error) {
 				data, err := v.MarshalJSON()
 				if err != nil {
@@ -218,7 +218,7 @@ func FormBody(v interface{}) ClientOption {
 			})
 		}
 	}()
-	return combineClientOptions(
+	return CombineClientOptions(
 		bodyOpt,
 		Header("Content-Type", "application/x-www-form-urlencoded"),
 	)
@@ -245,7 +245,7 @@ func JSON(v interface{}) ClientOption {
 			})
 		}
 	}()
-	return combineClientOptions(
+	return CombineClientOptions(
 		bodyOpt,
 		Header("Content-Type", "application/json"),
 	)
