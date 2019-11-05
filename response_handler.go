@@ -82,7 +82,7 @@ func IsStatus(codes ...int) ResponseHandlerCond {
 }
 
 func When(cond ResponseHandlerCond, rh ResponseHandler) ClientOption {
-	return WithInterceptors(func(cli *http.Client, req *http.Request, h Handler) (*http.Response, error) {
+	return Interceptors(func(cli *http.Client, req *http.Request, h Handler) (*http.Response, error) {
 		resp, err := h(cli, req)
 		if cond(resp, err) {
 			return rh(resp, err)

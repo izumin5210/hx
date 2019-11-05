@@ -60,7 +60,7 @@ func setBodyOption(r io.Reader) ClientOption {
 	return newBodyOption(func(context.Context) (io.Reader, error) { return r, nil })
 }
 
-func WithInterceptors(i ...Interceptor) ClientOption {
+func Interceptors(i ...Interceptor) ClientOption {
 	return ClientOptionFunc(func(c *ClientConfig) { c.Interceptors = append(c.Interceptors, i...) })
 }
 
@@ -122,7 +122,7 @@ func Timeout(t time.Duration) ClientOption {
 
 // BasicAuth sets an username and a password for basic authentication.
 func BasicAuth(username, password string) ClientOption {
-	return WithInterceptors(func(c *http.Client, r *http.Request, h Handler) (*http.Response, error) {
+	return Interceptors(func(c *http.Client, r *http.Request, h Handler) (*http.Response, error) {
 		r.SetBasicAuth(username, password)
 		return h(c, r)
 	})
@@ -130,7 +130,7 @@ func BasicAuth(username, password string) ClientOption {
 
 // Header sets a value to request header.
 func Header(k, v string) ClientOption {
-	return WithInterceptors(func(c *http.Client, r *http.Request, h Handler) (*http.Response, error) {
+	return Interceptors(func(c *http.Client, r *http.Request, h Handler) (*http.Response, error) {
 		r.Header.Set(k, v)
 		return h(c, r)
 	})
