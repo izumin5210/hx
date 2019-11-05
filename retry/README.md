@@ -15,6 +15,6 @@ newBackOff := func() backoff.BackOff {
 err := hx.Get(ctx, "https://api.example.com/contents/1",
 	retry.When(hx.Any(hx.IsServerError(), hx.IsNetworkError()), newBackOff),
 	hx.WhenOK(hx.AsJSON(&cont)),
-	hx.WhenStatus(hx.AsError()),
+	hx.WhenNotOK(hx.AsError()),
 )
 ```
