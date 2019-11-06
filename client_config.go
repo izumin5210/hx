@@ -8,10 +8,9 @@ import (
 )
 
 type ClientConfig struct {
-	ClientOptions []func(context.Context, *http.Client) error
-	URLOptions    []func(context.Context, *url.URL) error
-	BodyOption    func(context.Context) (io.Reader, error)
-	Interceptors  []Interceptor
+	URLOptions   []func(context.Context, *url.URL) error
+	BodyOption   func(context.Context) (io.Reader, error)
+	Interceptors []Interceptor
 }
 
 func (cfg *ClientConfig) Apply(opts ...ClientOption) {

@@ -30,7 +30,7 @@ func (e *ResponseError) Unwrap() error {
 
 func AsJSON(dst interface{}) ResponseHandler {
 	return func(r *http.Response, err error) (*http.Response, error) {
-		if r == nil || err == nil {
+		if r == nil || err != nil {
 			return r, err
 		}
 		defer r.Body.Close()

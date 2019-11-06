@@ -44,12 +44,6 @@ func newURLOption(f func(context.Context, *url.URL) error) ClientOption {
 	})
 }
 
-func newClientOption(f func(context.Context, *http.Client) error) ClientOption {
-	return ClientOptionFunc(func(c *ClientConfig) {
-		c.ClientOptions = append(c.ClientOptions, f)
-	})
-}
-
 func newBodyOption(f func(context.Context) (io.Reader, error)) ClientOption {
 	return ClientOptionFunc(func(c *ClientConfig) {
 		c.BodyOption = f
@@ -97,34 +91,33 @@ func Query(k, v string) ClientOption {
 }
 
 // HTTPClient sets a HTTP client that used to send HTTP request(s).
-func HTTPClient(cli *http.Client) ClientOption {
-	return newClientOption(func(_ context.Context, dest *http.Client) error {
-		*dest = *cli
-		return nil
+func HTTPClient(c *http.Client) ClientOption {
+	return Interceptors(func(_ *http.Client, r *http.Request, h Handler) (*http.Response, error) {
+		return h(c, r)
 	})
 }
 
 // Transport sets the round tripper to http.Client.
 func Transport(rt http.RoundTripper) ClientOption {
-	return newClientOption(func(ctx context.Context, cli *http.Client) error {
-		cli.Transport = rt
-		return nil
+	return Interceptors(func(c *http.Client, r *http.Request, h Handler) (*http.Response, error) {
+		c.Transport = rt
+		return h(c, r)
 	})
 }
 
 // TransportFrom sets the round tripper to http.Client.
 func TransportFrom(f func(http.RoundTripper) http.RoundTripper) ClientOption {
-	return newClientOption(func(ctx context.Context, cli *http.Client) error {
-		cli.Transport = f(cli.Transport)
-		return nil
+	return Interceptors(func(c *http.Client, r *http.Request, h Handler) (*http.Response, error) {
+		c.Transport = f(c.Transport)
+		return h(c, r)
 	})
 }
 
 // Timeout sets the max duration for http request(s).
 func Timeout(t time.Duration) ClientOption {
-	return newClientOption(func(_ context.Context, cli *http.Client) error {
-		cli.Timeout = t
-		return nil
+	return Interceptors(func(c *http.Client, r *http.Request, h Handler) (*http.Response, error) {
+		c.Timeout = t
+		return h(c, r)
 	})
 }
 
