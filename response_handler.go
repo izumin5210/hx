@@ -78,8 +78,8 @@ func Not(cond ResponseHandlerCond) ResponseHandlerCond {
 	return func(r *http.Response, err error) bool { return !cond(r, err) }
 }
 
-func IsOK() ResponseHandlerCond          { return checkStatus(func(c int) bool { return c/100 == 2 }) }
-func IsNotOK() ResponseHandlerCond       { return Not(IsOK()) }
+func IsSuccess() ResponseHandlerCond     { return checkStatus(func(c int) bool { return c/100 == 2 }) }
+func IsFailure() ResponseHandlerCond     { return Not(IsSuccess()) }
 func IsClientError() ResponseHandlerCond { return checkStatus(func(c int) bool { return c/100 == 4 }) }
 func IsServerError() ResponseHandlerCond { return checkStatus(func(c int) bool { return c/100 == 5 }) }
 func IsNetworkError() ResponseHandlerCond {
@@ -103,8 +103,8 @@ func When(cond ResponseHandlerCond, rh ResponseHandler) ClientOption {
 	})
 }
 
-func WhenOK(h ResponseHandler) ClientOption                   { return When(IsOK(), h) }
-func WhenNotOK(h ResponseHandler) ClientOption                { return When(IsNotOK(), h) }
+func WhenSuccess(h ResponseHandler) ClientOption              { return When(IsSuccess(), h) }
+func WhenFailure(h ResponseHandler) ClientOption              { return When(IsFailure(), h) }
 func WhenClientError(h ResponseHandler) ClientOption          { return When(IsClientError(), h) }
 func WhenServerError(h ResponseHandler) ClientOption          { return When(IsServerError(), h) }
 func WhenStatus(h ResponseHandler, codes ...int) ClientOption { return When(IsStatus(codes...), h) }

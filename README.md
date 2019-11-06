@@ -27,8 +27,8 @@ var cont Content
 
 ctx := context.Background()
 err := hx.Get(ctx, "https://api.example.com/contents/1",
-	hx.WhenOK(hx.AsJSON(&cont)),
-	hx.WhenNotOK(hx.AsError()),
+	hx.WhenSuccess(hx.AsJSON(&cont)),
+	hx.WhenFailure(hx.AsError()),
 )
 ```
 
@@ -83,8 +83,8 @@ func (a *ContentAPI) GetContent(ctx context.Context, id int) (*Content, error) {
 	var cont Content
 
 	err := a.client.Get(ctx, hx.Path("api", "contents", id),
-		hx.WhenOK(hx.AsJSON(&cont)),
-		hx.WhenNotOK(hx.AsError()),
+		hx.WhenSuccess(hx.AsJSON(&cont)),
+		hx.WhenFailure(hx.AsError()),
 	)
 
 	if err != nil {
@@ -99,8 +99,8 @@ func (a *ContentAPI) CreateContent(ctx context.Context, in *Content) (*Content, 
 
 	err := a.client.Post(ctx, "/api/contents",
 		hx.JSON(in),
-		hx.WhenOK(hx.AsJSON(&out)),
-		hx.WhenNotOK(hx.AsError()),
+		hx.WhenSuccess(hx.AsJSON(&out)),
+		hx.WhenFailure(hx.AsError()),
 	)
 
 	if err != nil {
