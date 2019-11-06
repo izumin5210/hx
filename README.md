@@ -75,7 +75,7 @@ func (a *ContentAPI) GetContent(ctx context.Context, id int) (*Content, error) {
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get content: %w", err)
+		// ...
 	}
 
 	return &cont, nil
@@ -87,11 +87,23 @@ func (a *ContentAPI) CreateContent(ctx context.Context, in *Content) (*Content, 
 	err := a.client.Post(ctx, "/api/contents",
 		hx.JSON(in),
 		hx.WhenSuccess(hx.AsJSON(&out)),
+		hx.WhenStatus(hx.AsErrorOf(&InvalidArgument{}), http.StatusBadRequest),
 		hx.WhenFailure(hx.AsError()),
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to create content: %w", err)
+		var (
+			invalidArgErr *InvalidArgument
+			respErr       *hx.ResponseError
+		)
+		if errors.As(err, &invalidArgErr) {
+			// handle known error
+		} else if errors.As(err, &respErr) {
+			// handle unknown response error
+		} else {
+			err := errors.Unwrap(err)
+			// handle unknown error
+		}
 	}
 
 	return &out, nil
