@@ -7,19 +7,19 @@ import (
 	"net/url"
 )
 
-type ClientConfig struct {
+type Config struct {
 	URLOptions   []func(context.Context, *url.URL) error
 	BodyOption   func(context.Context) (io.Reader, error)
 	Interceptors []Interceptor
 }
 
-func (cfg *ClientConfig) Apply(opts ...ClientOption) {
+func (cfg *Config) Apply(opts ...Option) {
 	for _, f := range opts {
 		f.Apply(cfg)
 	}
 }
 
-func (cfg *ClientConfig) DoRequest(ctx context.Context, meth string) (*http.Response, error) {
+func (cfg *Config) DoRequest(ctx context.Context, meth string) (*http.Response, error) {
 	url, err := cfg.buildURL(ctx)
 	if err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ func (cfg *ClientConfig) DoRequest(ctx context.Context, meth string) (*http.Resp
 	return handler(new(http.Client), req)
 }
 
-func (cfg *ClientConfig) buildURL(ctx context.Context) (*url.URL, error) {
+func (cfg *Config) buildURL(ctx context.Context) (*url.URL, error) {
 	u := new(url.URL)
 
 	for _, f := range cfg.URLOptions {
@@ -58,7 +58,7 @@ func (cfg *ClientConfig) buildURL(ctx context.Context) (*url.URL, error) {
 	return u, nil
 }
 
-func (cfg *ClientConfig) buildBody(ctx context.Context) (io.Reader, error) {
+func (cfg *Config) buildBody(ctx context.Context) (io.Reader, error) {
 	f := cfg.BodyOption
 	if f == nil {
 		return nil, nil

@@ -56,8 +56,8 @@ func init() {
 	defaultTransport.MaxIdleConnsPerHost = 100
 
 	// Set global options
-	hx.DefaultClientOptions = append(
-		hx.DefaultClientOptions,
+	hx.DefaultOptions = append(
+		hx.DefaultOptions,
 		hx.UserAgent(fmt.Sprintf("yourapp (%s)", hx.DefaultUserAgent)),
 		hx.Transport(defaultTransport),
 		hx.TransportFrom(func(rt http.RoundTripper) http.RoundTripper {

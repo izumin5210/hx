@@ -93,7 +93,7 @@ func IsStatus(codes ...int) ResponseHandlerCond {
 	return checkStatus(func(code int) bool { _, ok := m[code]; return ok })
 }
 
-func When(cond ResponseHandlerCond, rh ResponseHandler) ClientOption {
+func When(cond ResponseHandlerCond, rh ResponseHandler) Option {
 	return Interceptors(func(cli *http.Client, req *http.Request, h Handler) (*http.Response, error) {
 		resp, err := h(cli, req)
 		if cond(resp, err) {
@@ -103,8 +103,8 @@ func When(cond ResponseHandlerCond, rh ResponseHandler) ClientOption {
 	})
 }
 
-func WhenSuccess(h ResponseHandler) ClientOption              { return When(IsSuccess(), h) }
-func WhenFailure(h ResponseHandler) ClientOption              { return When(IsFailure(), h) }
-func WhenClientError(h ResponseHandler) ClientOption          { return When(IsClientError(), h) }
-func WhenServerError(h ResponseHandler) ClientOption          { return When(IsServerError(), h) }
-func WhenStatus(h ResponseHandler, codes ...int) ClientOption { return When(IsStatus(codes...), h) }
+func WhenSuccess(h ResponseHandler) Option              { return When(IsSuccess(), h) }
+func WhenFailure(h ResponseHandler) Option              { return When(IsFailure(), h) }
+func WhenClientError(h ResponseHandler) Option          { return When(IsClientError(), h) }
+func WhenServerError(h ResponseHandler) Option          { return When(IsServerError(), h) }
+func WhenStatus(h ResponseHandler, codes ...int) Option { return When(IsStatus(codes...), h) }
