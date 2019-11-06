@@ -16,56 +16,56 @@ import (
 )
 
 var (
-	DefaultUserAgent     = fmt.Sprintf("hx/%s; %s", Version, runtime.Version())
-	DefaultClientOptions = []ClientOption{
+	DefaultUserAgent = fmt.Sprintf("hx/%s; %s", Version, runtime.Version())
+	DefaultOptions   = []Option{
 		UserAgent(DefaultUserAgent),
 	}
 )
 
-type ClientOption interface {
-	Apply(*ClientConfig)
+type Option interface {
+	Apply(*Config)
 }
 
-type ClientOptionFunc func(*ClientConfig)
+type OptionFunc func(*Config)
 
-func (f ClientOptionFunc) Apply(c *ClientConfig) { f(c) }
+func (f OptionFunc) Apply(c *Config) { f(c) }
 
-func CombineClientOptions(opts ...ClientOption) ClientOption {
-	return ClientOptionFunc(func(c *ClientConfig) {
+func CombineOptions(opts ...Option) Option {
+	return OptionFunc(func(c *Config) {
 		for _, o := range opts {
 			o.Apply(c)
 		}
 	})
 }
 
-func newURLOption(f func(context.Context, *url.URL) error) ClientOption {
-	return ClientOptionFunc(func(c *ClientConfig) {
+func newURLOption(f func(context.Context, *url.URL) error) Option {
+	return OptionFunc(func(c *Config) {
 		c.URLOptions = append(c.URLOptions, f)
 	})
 }
 
-func newBodyOption(f func(context.Context) (io.Reader, error)) ClientOption {
-	return ClientOptionFunc(func(c *ClientConfig) {
+func newBodyOption(f func(context.Context) (io.Reader, error)) Option {
+	return OptionFunc(func(c *Config) {
 		c.BodyOption = f
 	})
 }
 
-func setBodyOption(r io.Reader) ClientOption {
+func setBodyOption(r io.Reader) Option {
 	return newBodyOption(func(context.Context) (io.Reader, error) { return r, nil })
 }
 
-func Interceptors(i ...Interceptor) ClientOption {
-	return ClientOptionFunc(func(c *ClientConfig) { c.Interceptors = append(c.Interceptors, i...) })
+func Interceptors(i ...Interceptor) Option {
+	return OptionFunc(func(c *Config) { c.Interceptors = append(c.Interceptors, i...) })
 }
 
-func BaseURL(baseURL *url.URL) ClientOption {
+func BaseURL(baseURL *url.URL) Option {
 	return newURLOption(func(_ context.Context, dest *url.URL) error {
 		*dest = *baseURL
 		return nil
 	})
 }
 
-func URL(urlStr string) ClientOption {
+func URL(urlStr string) Option {
 	return newURLOption(func(_ context.Context, base *url.URL) error {
 		parse := url.Parse
 		if base != nil {
@@ -81,7 +81,7 @@ func URL(urlStr string) ClientOption {
 }
 
 // Query sets an url query parameter.
-func Query(k, v string) ClientOption {
+func Query(k, v string) Option {
 	return newURLOption(func(_ context.Context, u *url.URL) error {
 		q := u.Query()
 		q.Set(k, v)
@@ -91,14 +91,14 @@ func Query(k, v string) ClientOption {
 }
 
 // HTTPClient sets a HTTP client that used to send HTTP request(s).
-func HTTPClient(c *http.Client) ClientOption {
+func HTTPClient(c *http.Client) Option {
 	return Interceptors(func(_ *http.Client, r *http.Request, h Handler) (*http.Response, error) {
 		return h(c, r)
 	})
 }
 
 // Transport sets the round tripper to http.Client.
-func Transport(rt http.RoundTripper) ClientOption {
+func Transport(rt http.RoundTripper) Option {
 	return Interceptors(func(c *http.Client, r *http.Request, h Handler) (*http.Response, error) {
 		c.Transport = rt
 		return h(c, r)
@@ -106,7 +106,7 @@ func Transport(rt http.RoundTripper) ClientOption {
 }
 
 // TransportFrom sets the round tripper to http.Client.
-func TransportFrom(f func(http.RoundTripper) http.RoundTripper) ClientOption {
+func TransportFrom(f func(http.RoundTripper) http.RoundTripper) Option {
 	return Interceptors(func(c *http.Client, r *http.Request, h Handler) (*http.Response, error) {
 		c.Transport = f(c.Transport)
 		return h(c, r)
@@ -114,7 +114,7 @@ func TransportFrom(f func(http.RoundTripper) http.RoundTripper) ClientOption {
 }
 
 // Timeout sets the max duration for http request(s).
-func Timeout(t time.Duration) ClientOption {
+func Timeout(t time.Duration) Option {
 	return Interceptors(func(c *http.Client, r *http.Request, h Handler) (*http.Response, error) {
 		c.Timeout = t
 		return h(c, r)
@@ -122,7 +122,7 @@ func Timeout(t time.Duration) ClientOption {
 }
 
 // BasicAuth sets an username and a password for basic authentication.
-func BasicAuth(username, password string) ClientOption {
+func BasicAuth(username, password string) Option {
 	return Interceptors(func(c *http.Client, r *http.Request, h Handler) (*http.Response, error) {
 		r.SetBasicAuth(username, password)
 		return h(c, r)
@@ -130,7 +130,7 @@ func BasicAuth(username, password string) ClientOption {
 }
 
 // Header sets a value to request header.
-func Header(k, v string) ClientOption {
+func Header(k, v string) Option {
 	return Interceptors(func(c *http.Client, r *http.Request, h Handler) (*http.Response, error) {
 		r.Header.Set(k, v)
 		return h(c, r)
@@ -138,20 +138,20 @@ func Header(k, v string) ClientOption {
 }
 
 // Authorization sets an authorization scheme and a token of an user.
-func Authorization(scheme, token string) ClientOption {
+func Authorization(scheme, token string) Option {
 	return Header("Authorization", scheme+" "+token)
 }
 
-func Bearer(token string) ClientOption {
+func Bearer(token string) Option {
 	return Authorization("Bearer", token)
 }
 
-func UserAgent(ua string) ClientOption {
+func UserAgent(ua string) Option {
 	return Header("User-Agent", ua)
 }
 
 // Body sets data to request body.
-func Body(v interface{}) ClientOption {
+func Body(v interface{}) Option {
 	switch v := v.(type) {
 	case io.Reader:
 		return setBodyOption(v)
@@ -160,12 +160,12 @@ func Body(v interface{}) ClientOption {
 	case []byte:
 		return setBodyOption(bytes.NewReader(v))
 	case url.Values:
-		return CombineClientOptions(
+		return CombineOptions(
 			setBodyOption(strings.NewReader(v.Encode())),
 			Header("Content-Type", "application/x-www-form-urlencoded"),
 		)
 	case json.Marshaler:
-		return CombineClientOptions(
+		return CombineOptions(
 			newBodyOption(func(context.Context) (io.Reader, error) {
 				data, err := v.MarshalJSON()
 				if err != nil {
@@ -198,8 +198,8 @@ func Body(v interface{}) ClientOption {
 }
 
 // FormBody sets data to request body as formm.
-func FormBody(v interface{}) ClientOption {
-	bodyOpt := func() ClientOption {
+func FormBody(v interface{}) Option {
+	bodyOpt := func() Option {
 		switch v := v.(type) {
 		case io.Reader:
 			return setBodyOption(v)
@@ -215,15 +215,15 @@ func FormBody(v interface{}) ClientOption {
 			})
 		}
 	}()
-	return CombineClientOptions(
+	return CombineOptions(
 		bodyOpt,
 		Header("Content-Type", "application/x-www-form-urlencoded"),
 	)
 }
 
 // JSON sets data to request body as json.
-func JSON(v interface{}) ClientOption {
-	bodyOpt := func() ClientOption {
+func JSON(v interface{}) Option {
+	bodyOpt := func() Option {
 		switch v := v.(type) {
 		case io.Reader:
 			return setBodyOption(v)
@@ -242,7 +242,7 @@ func JSON(v interface{}) ClientOption {
 			})
 		}
 	}()
-	return CombineClientOptions(
+	return CombineOptions(
 		bodyOpt,
 		Header("Content-Type", "application/json"),
 	)
