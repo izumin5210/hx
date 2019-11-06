@@ -94,8 +94,7 @@ func IsStatus(codes ...int) ResponseHandlerCond {
 }
 
 func When(cond ResponseHandlerCond, rh ResponseHandler) Option {
-	return Interceptors(func(cli *http.Client, req *http.Request, h Handler) (*http.Response, error) {
-		resp, err := h(cli, req)
+	return Then(func(resp *http.Response, err error) (*http.Response, error) {
 		if cond(resp, err) {
 			return rh(resp, err)
 		}

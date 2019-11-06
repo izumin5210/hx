@@ -247,3 +247,9 @@ func JSON(v interface{}) Option {
 		Header("Content-Type", "application/json"),
 	)
 }
+
+func Then(rh ResponseHandler) Option {
+	return Interceptors(func(c *http.Client, r *http.Request, h Handler) (*http.Response, error) {
+		return rh(h(c, r))
+	})
+}
