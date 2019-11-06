@@ -30,10 +30,12 @@ func (cfg *ClientConfig) DoRequest(ctx context.Context, meth string) (*http.Resp
 		return nil, err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, meth, url.String(), body)
+	req, err := http.NewRequest(meth, url.String(), body)
 	if err != nil {
 		return nil, err
 	}
+
+	req = req.WithContext(ctx)
 
 	handler := wrapHandler(
 		combineInterceptors(cfg.Interceptors),
