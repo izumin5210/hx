@@ -36,8 +36,8 @@ func ExampleGet() {
 		ctx,
 		ts.URL+"/echo",
 		hx.Query("message", "It Works!"),
-		hx.WhenOK(hx.AsJSON(&out)),
-		hx.WhenNotOK(hx.AsError()),
+		hx.WhenSuccess(hx.AsJSON(&out)),
+		hx.WhenFailure(hx.AsError()),
 	)
 	if err != nil {
 		// Handle errors...

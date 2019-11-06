@@ -100,7 +100,7 @@ func TestClient(t *testing.T) {
 		}
 		err := hx.Get(context.Background(), ts.URL+"/echo",
 			hx.Query("message", "It, Works!"),
-			hx.WhenOK(hx.AsJSON(&out)),
+			hx.WhenSuccess(hx.AsJSON(&out)),
 		)
 		if err != nil {
 			t.Errorf("returned %v, want nil", err)
@@ -116,7 +116,7 @@ func TestClient(t *testing.T) {
 				Message string `json:"message"`
 			}
 			err := hx.Get(context.Background(), ts.URL+"/echo",
-				hx.WhenOK(hx.AsJSON(&out)),
+				hx.WhenSuccess(hx.AsJSON(&out)),
 			)
 			if err != nil {
 				t.Errorf("returned %v, want nil", err)
@@ -131,8 +131,8 @@ func TestClient(t *testing.T) {
 				Message string `json:"message"`
 			}
 			err := hx.Get(context.Background(), ts.URL+"/echo",
-				hx.WhenOK(hx.AsJSON(&out)),
-				hx.WhenNotOK(hx.AsError()),
+				hx.WhenSuccess(hx.AsJSON(&out)),
+				hx.WhenFailure(hx.AsError()),
 			)
 			checkStatusFromError(t, err, http.StatusBadRequest)
 			checkErrorIsNotWrapped(t, err)
@@ -143,8 +143,8 @@ func TestClient(t *testing.T) {
 				Message string `json:"message"`
 			}
 			err := hx.Get(context.Background(), ts.URL+"/ping",
-				hx.WhenOK(hx.AsJSON(&out)),
-				hx.WhenNotOK(hx.AsError()),
+				hx.WhenSuccess(hx.AsJSON(&out)),
+				hx.WhenFailure(hx.AsError()),
 			)
 			checkStatusFromError(t, err, http.StatusOK)
 			checkErrorIsWrapped(t, err)
@@ -155,7 +155,7 @@ func TestClient(t *testing.T) {
 		t.Run("success", func(t *testing.T) {
 			err := hx.Get(context.Background(), ts.URL+"/basic_auth",
 				hx.BasicAuth("foo", "bar"),
-				hx.WhenNotOK(hx.AsError()),
+				hx.WhenFailure(hx.AsError()),
 			)
 			if err != nil {
 				t.Errorf("returned %v, want nil", err)
@@ -165,7 +165,7 @@ func TestClient(t *testing.T) {
 		t.Run("failure", func(t *testing.T) {
 			err := hx.Get(context.Background(), ts.URL+"/basic_auth",
 				hx.BasicAuth("baz", "qux"),
-				hx.WhenNotOK(hx.AsError()),
+				hx.WhenFailure(hx.AsError()),
 			)
 			checkStatusFromError(t, err, http.StatusUnauthorized)
 			checkErrorIsNotWrapped(t, err)
@@ -176,7 +176,7 @@ func TestClient(t *testing.T) {
 		t.Run("success", func(t *testing.T) {
 			err := hx.Get(context.Background(), ts.URL+"/bearer_auth",
 				hx.Bearer("tokentoken"),
-				hx.WhenNotOK(hx.AsError()),
+				hx.WhenFailure(hx.AsError()),
 			)
 			if err != nil {
 				t.Errorf("returned %v, want nil", err)
@@ -186,7 +186,7 @@ func TestClient(t *testing.T) {
 		t.Run("failure", func(t *testing.T) {
 			err := hx.Get(context.Background(), ts.URL+"/bearer_auth",
 				hx.Bearer("tokentokentoken"),
-				hx.WhenNotOK(hx.AsError()),
+				hx.WhenFailure(hx.AsError()),
 			)
 			checkStatusFromError(t, err, http.StatusUnauthorized)
 			checkErrorIsNotWrapped(t, err)
@@ -198,9 +198,9 @@ func TestClient(t *testing.T) {
 			Message string `json:"message"`
 		}
 		err := hx.Get(context.Background(), ts.URL+"/timeout",
-			hx.WhenOK(hx.AsJSON(&out)),
+			hx.WhenSuccess(hx.AsJSON(&out)),
 			hx.Timeout(10*time.Millisecond),
-			hx.WhenNotOK(hx.AsError()),
+			hx.WhenFailure(hx.AsError()),
 		)
 		if err == nil {
 			t.Error("returned nil, want an error")
@@ -216,7 +216,7 @@ func TestClient(t *testing.T) {
 		}
 		err := hx.Get(context.Background(), ts.URL+"/basic_auth",
 			hx.Transport(transport),
-			hx.WhenNotOK(hx.AsError()),
+			hx.WhenFailure(hx.AsError()),
 		)
 		if err != nil {
 			t.Errorf("returned %v, want nil", err)
