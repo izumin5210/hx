@@ -1,5 +1,7 @@
 # hx
+[![CI](https://github.com/izumin5210/hx/workflows/CI/badge.svg)](https://github.com/izumin5210/hx/actions?workflow=CI)
 [![GoDoc](https://godoc.org/github.com/izumin5210/hx?status.svg)](https://godoc.org/github.com/izumin5210/hx)
+[![codecov](https://codecov.io/gh/izumin5210/hx/branch/master/graph/badge.svg)](https://codecov.io/gh/izumin5210/hx)
 [![License](https://img.shields.io/github/license/izumin5210/hx)](./LICENSE)
 
 Developer-friendly, Production-ready and extensible HTTP client for Go
