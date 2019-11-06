@@ -142,6 +142,10 @@ func Authorization(scheme, token string) ClientOption {
 	return Header("Authorization", scheme+" "+token)
 }
 
+func Bearer(token string) ClientOption {
+	return Authorization("Bearer", token)
+}
+
 func UserAgent(ua string) ClientOption {
 	return Header("User-Agent", ua)
 }
