@@ -47,7 +47,7 @@ func AsError() ResponseHandler {
 		if r == nil || err != nil {
 			return r, err
 		}
-		err = bufferAndCloseResponse(r)
+		err = DrainResponseBody(r)
 		if err != nil {
 			return nil, &ResponseError{Response: r, err: err}
 		}

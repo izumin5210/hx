@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func bufferAndCloseResponse(r *http.Response) error {
+func DrainResponseBody(r *http.Response) error {
 	var buf bytes.Buffer
 	_, err := buf.ReadFrom(r.Body)
 	if err != nil {
