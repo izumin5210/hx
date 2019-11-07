@@ -8,6 +8,14 @@ import (
 
 type ResponseHandler func(*http.Response, error) (*http.Response, error)
 
+func (h ResponseHandler) HandleResponse(r *http.Response, err error) (*http.Response, error) {
+	return h(r, err)
+}
+
+func (h ResponseHandler) Apply(c *Config) {
+	c.ResponseHandlers = append(c.ResponseHandlers, h)
+}
+
 type ResponseError struct {
 	Response *http.Response
 	err      error
@@ -94,8 +102,7 @@ func IsStatus(codes ...int) ResponseHandlerCond {
 }
 
 func When(cond ResponseHandlerCond, rh ResponseHandler) Option {
-	return Interceptors(func(cli *http.Client, req *http.Request, h Handler) (*http.Response, error) {
-		resp, err := h(cli, req)
+	return ResponseHandler(func(resp *http.Response, err error) (*http.Response, error) {
 		if cond(resp, err) {
 			return rh(resp, err)
 		}

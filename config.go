@@ -8,9 +8,10 @@ import (
 )
 
 type Config struct {
-	URLOptions   []func(context.Context, *url.URL) error
-	BodyOption   func(context.Context) (io.Reader, error)
-	Interceptors []Interceptor
+	URLOptions       []func(context.Context, *url.URL) error
+	BodyOption       func(context.Context) (io.Reader, error)
+	RequestHandlers  []RequestHandler
+	ResponseHandlers []ResponseHandler
 }
 
 func (cfg *Config) Apply(opts ...Option) {
@@ -36,13 +37,25 @@ func (cfg *Config) DoRequest(ctx context.Context, meth string) (*http.Response, 
 	}
 
 	req = req.WithContext(ctx)
+	cli := new(http.Client)
 
-	handler := wrapHandler(
-		combineInterceptors(cfg.Interceptors),
-		func(c *http.Client, r *http.Request) (*http.Response, error) { return c.Do(r) },
-	)
+	for _, h := range cfg.RequestHandlers {
+		cli, req, err = h(cli, req)
+		if err != nil {
+			return nil, err
+		}
+	}
 
-	return handler(new(http.Client), req)
+	resp, err := cli.Do(req)
+
+	for _, h := range cfg.ResponseHandlers {
+		resp, err = h(resp, err)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return resp, err
 }
 
 func (cfg *Config) buildURL(ctx context.Context) (*url.URL, error) {

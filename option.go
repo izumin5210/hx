@@ -8,11 +8,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"net/url"
 	"runtime"
 	"strings"
-	"time"
 )
 
 var (
@@ -54,10 +52,6 @@ func setBodyOption(r io.Reader) Option {
 	return newBodyOption(func(context.Context) (io.Reader, error) { return r, nil })
 }
 
-func Interceptors(i ...Interceptor) Option {
-	return OptionFunc(func(c *Config) { c.Interceptors = append(c.Interceptors, i...) })
-}
-
 func BaseURL(baseURL *url.URL) Option {
 	return newURLOption(func(_ context.Context, dest *url.URL) error {
 		*dest = *baseURL
@@ -87,53 +81,6 @@ func Query(k, v string) Option {
 		q.Set(k, v)
 		u.RawQuery = q.Encode()
 		return nil
-	})
-}
-
-// HTTPClient sets a HTTP client that used to send HTTP request(s).
-func HTTPClient(c *http.Client) Option {
-	return Interceptors(func(_ *http.Client, r *http.Request, h Handler) (*http.Response, error) {
-		return h(c, r)
-	})
-}
-
-// Transport sets the round tripper to http.Client.
-func Transport(rt http.RoundTripper) Option {
-	return Interceptors(func(c *http.Client, r *http.Request, h Handler) (*http.Response, error) {
-		c.Transport = rt
-		return h(c, r)
-	})
-}
-
-// TransportFrom sets the round tripper to http.Client.
-func TransportFrom(f func(http.RoundTripper) http.RoundTripper) Option {
-	return Interceptors(func(c *http.Client, r *http.Request, h Handler) (*http.Response, error) {
-		c.Transport = f(c.Transport)
-		return h(c, r)
-	})
-}
-
-// Timeout sets the max duration for http request(s).
-func Timeout(t time.Duration) Option {
-	return Interceptors(func(c *http.Client, r *http.Request, h Handler) (*http.Response, error) {
-		c.Timeout = t
-		return h(c, r)
-	})
-}
-
-// BasicAuth sets an username and a password for basic authentication.
-func BasicAuth(username, password string) Option {
-	return Interceptors(func(c *http.Client, r *http.Request, h Handler) (*http.Response, error) {
-		r.SetBasicAuth(username, password)
-		return h(c, r)
-	})
-}
-
-// Header sets a value to request header.
-func Header(k, v string) Option {
-	return Interceptors(func(c *http.Client, r *http.Request, h Handler) (*http.Response, error) {
-		r.Header.Set(k, v)
-		return h(c, r)
 	})
 }
 
