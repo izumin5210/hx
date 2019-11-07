@@ -7,10 +7,11 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"reflect"
 	"strings"
 )
 
-func bufferAndCloseResponse(r *http.Response) error {
+func DrainResponseBody(r *http.Response) error {
 	var buf bytes.Buffer
 	_, err := buf.ReadFrom(r.Body)
 	if err != nil {
@@ -22,6 +23,25 @@ func bufferAndCloseResponse(r *http.Response) error {
 	}
 	r.Body = ioutil.NopCloser(&buf)
 	return nil
+}
+
+// CloneTransport creates a new *http.Transport object that has copied attributes from a given one.
+func CloneTransport(in *http.Transport) *http.Transport {
+	out := new(http.Transport)
+	outRv := reflect.ValueOf(out).Elem()
+
+	rv := reflect.ValueOf(in).Elem()
+	rt := rv.Type()
+
+	n := rt.NumField()
+	for i := 0; i < n; i++ {
+		src, dst := rv.Field(i), outRv.Field(i)
+		if src.Type().AssignableTo(dst.Type()) && dst.CanSet() {
+			dst.Set(src)
+		}
+	}
+
+	return out
 }
 
 func Path(elem ...interface{}) string {

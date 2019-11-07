@@ -18,20 +18,20 @@ func (h ResponseHandler) Apply(c *Config) {
 
 type ResponseError struct {
 	Response *http.Response
-	err      error
+	Err      error
 }
 
 func (e *ResponseError) Error() string {
 	msg := fmt.Sprintf("the server responeded with status %d", e.Response.StatusCode)
-	if e.err != nil {
-		msg = fmt.Sprintf("%s: %s", msg, e.err.Error())
+	if e.Err != nil {
+		msg = fmt.Sprintf("%s: %s", msg, e.Err.Error())
 	}
 	return msg
 }
 
 func (e *ResponseError) Unwrap() error {
-	if e.err != nil {
-		return e.err
+	if e.Err != nil {
+		return e.Err
 	}
 	return e
 }
@@ -44,7 +44,7 @@ func AsJSON(dst interface{}) ResponseHandler {
 		defer r.Body.Close()
 		err = json.NewDecoder(r.Body).Decode(dst)
 		if err != nil {
-			return nil, &ResponseError{Response: r, err: err}
+			return nil, &ResponseError{Response: r, Err: err}
 		}
 		return r, nil
 	}
@@ -55,11 +55,46 @@ func AsError() ResponseHandler {
 		if r == nil || err != nil {
 			return r, err
 		}
-		err = bufferAndCloseResponse(r)
+		err = DrainResponseBody(r)
 		if err != nil {
-			return nil, &ResponseError{Response: r, err: err}
+			return nil, &ResponseError{Response: r, Err: err}
 		}
 		return r, &ResponseError{Response: r}
+	}
+}
+
+// AsErrorOf is ResponseHandler that will populate an error with the JSON returned within the response body.
+// And it will wrap the error with ResponseError and return it.
+//  err := hx.Post(ctx, "https://example.com/posts",
+//  	hx.JSON(body)
+//  	hx.WhenSuccess(hx.AsJSON(&post), http.StatusBadRequest),
+//  	hx.WhenStatus(hx.AsErrorOf(&InvalidArgument{}), http.StatusBadRequest),
+//  	hx.WhenFailure(hx.AsError()),
+//  )
+//  if err != nil {
+//  	var (
+//  		invalidArgErr *InvalidArgument
+//  		respErr       *hx.ResponseError
+//  	)
+//  	if errors.As(err, &invalidArgErr) {
+//  		// handle known error
+//  	} else if errors.As(err, &respErr) {
+//  		// handle unknown response error
+//  	} else {
+//  		err := errors.Unwrap(err)
+//  		// handle unknown error
+//  	}
+//  }
+func AsErrorOf(dst error) ResponseHandler {
+	return func(r *http.Response, err error) (*http.Response, error) {
+		if r == nil || err != nil {
+			return r, err
+		}
+		r, err = AsJSON(dst)(r, err)
+		if err != nil {
+			return nil, &ResponseError{Response: r, Err: err}
+		}
+		return nil, &ResponseError{Response: r, Err: dst}
 	}
 }
 

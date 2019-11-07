@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -40,6 +41,9 @@ func TestClient(t *testing.T) {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
+		case r.Method == http.MethodGet && r.URL.Path == "/error":
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{"message": "invalid argument"})
 		case r.Method == http.MethodGet && r.URL.Path == "/timeout":
 			time.Sleep(1 * time.Second)
 			err := json.NewEncoder(w).Encode(map[string]string{"message": "pong"})
@@ -149,6 +153,25 @@ func TestClient(t *testing.T) {
 			checkStatusFromError(t, err, http.StatusOK)
 			checkErrorIsWrapped(t, err)
 		})
+
+		t.Run("AsErrorOf", func(t *testing.T) {
+			err := hx.Get(context.Background(), ts.URL+"/error",
+				hx.WhenStatus(hx.AsErrorOf(&fakeError{}), http.StatusBadRequest),
+				hx.WhenFailure(hx.AsError()),
+			)
+			if err == nil {
+				t.Error("returned nil, want an error")
+			} else if reqErr, ok := err.(*hx.ResponseError); !ok {
+				t.Errorf("returned %v, want *hx.ResponseError", err)
+			} else if rawErr := reqErr.Err; rawErr == nil {
+				fmt.Println(reqErr)
+				t.Error("returned error wrapped no errors")
+			} else if fakeErr, ok := rawErr.(*fakeError); !ok {
+				t.Errorf("wrapped error is unknown: %v", rawErr)
+			} else if got, want := fakeErr.Message, "invalid argument"; got != want {
+				t.Errorf("wrapped error has message %v, want %v", got, want)
+			}
+		})
 	})
 
 	t.Run("With BasicAuth", func(t *testing.T) {
@@ -223,6 +246,12 @@ func TestClient(t *testing.T) {
 		}
 	})
 }
+
+type fakeError struct {
+	Message string `json:"message"`
+}
+
+func (e fakeError) Error() string { return e.Message }
 
 type fakeTransport struct {
 	base          http.RoundTripper
