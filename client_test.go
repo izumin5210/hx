@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -187,6 +188,17 @@ func TestClient(t *testing.T) {
 		})
 	})
 
+	t.Run("With BaseURL", func(t *testing.T) {
+		u, _ := url.Parse(ts.URL)
+		cli := hx.NewClient(hx.BaseURL(u))
+		err := cli.Get(context.Background(), "/ping",
+			hx.WhenFailure(hx.AsError()),
+		)
+		if err != nil {
+			t.Errorf("returned %v, want nil", err)
+		}
+	})
+
 	t.Run("With BasicAuth", func(t *testing.T) {
 		t.Run("success", func(t *testing.T) {
 			err := hx.Get(context.Background(), ts.URL+"/basic_auth",
@@ -243,6 +255,19 @@ func TestClient(t *testing.T) {
 		}
 	})
 
+	t.Run("with Client", func(t *testing.T) {
+		cli := &http.Client{
+			Timeout: 10 * time.Millisecond,
+		}
+		err := hx.Get(context.Background(), ts.URL+"/timeout",
+			hx.HTTPClient(cli),
+			hx.WhenFailure(hx.AsError()),
+		)
+		if err == nil {
+			t.Error("returned nil, want an error")
+		}
+	})
+
 	t.Run("with Transport", func(t *testing.T) {
 		transport := &fakeTransport{
 			RoundTripFunc: func(rt http.RoundTripper, req *http.Request) (*http.Response, error) {
@@ -258,6 +283,24 @@ func TestClient(t *testing.T) {
 			t.Errorf("returned %v, want nil", err)
 		}
 	})
+
+	t.Run("with TransportFrom", func(t *testing.T) {
+		err := hx.Get(context.Background(), ts.URL+"/basic_auth",
+			hx.TransportFrom(func(base http.RoundTripper) http.RoundTripper {
+				return &fakeTransport{
+					Base: base,
+					RoundTripFunc: func(rt http.RoundTripper, req *http.Request) (*http.Response, error) {
+						req.SetBasicAuth("foo", "bar")
+						return rt.RoundTrip(req)
+					},
+				}
+			}),
+			hx.WhenFailure(hx.AsError()),
+		)
+		if err != nil {
+			t.Errorf("returned %v, want nil", err)
+		}
+	})
 }
 
 type fakeError struct {
@@ -267,12 +310,12 @@ type fakeError struct {
 func (e fakeError) Error() string { return e.Message }
 
 type fakeTransport struct {
-	base          http.RoundTripper
+	Base          http.RoundTripper
 	RoundTripFunc func(http.RoundTripper, *http.Request) (*http.Response, error)
 }
 
 func (t *fakeTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	base := t.base
+	base := t.Base
 	if base == nil {
 		base = http.DefaultTransport
 	}
