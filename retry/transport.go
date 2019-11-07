@@ -6,7 +6,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/cenkalti/backoff"
+	"github.com/cenkalti/backoff/v3"
+	"github.com/google/uuid"
 	"github.com/izumin5210/hx"
 )
 
@@ -47,6 +48,8 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 		req.Body = ioutil.NopCloser(&buf)
 	}
 
+	setIdempotencyKey(req)
+
 	_ = backoff.Retry(func() error {
 		resp, err = t.parent.RoundTrip(req)
 		if t.cond(resp, err) {
@@ -56,4 +59,10 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	}, bo)
 
 	return
+}
+
+func setIdempotencyKey(r *http.Request) {
+	if r.Header.Get("Idempotency-Key") == "" {
+		r.Header.Set("Idempotency-Key", uuid.New().String())
+	}
 }
