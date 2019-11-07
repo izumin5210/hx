@@ -20,6 +20,10 @@ func TestClient(t *testing.T) {
 		switch {
 		case r.Method == http.MethodGet && r.URL.Path == "/ping":
 			r.Write(bytes.NewBufferString("pong"))
+		case r.URL.Path == "/method":
+			if want, got := r.URL.Query().Get("method"), r.Method; got != want {
+				w.WriteHeader(http.StatusBadRequest)
+			}
 		case r.Method == http.MethodGet && r.URL.Path == "/echo":
 			msg := r.URL.Query().Get("message")
 			if msg == "" {
@@ -110,6 +114,54 @@ func TestClient(t *testing.T) {
 		if err != nil {
 			t.Errorf("returned %v, want nil", err)
 		}
+	})
+
+	t.Run("method", func(t *testing.T) {
+		t.Run(http.MethodGet, func(t *testing.T) {
+			err := hx.Get(context.Background(), ts.URL+"/method",
+				hx.Query("method", http.MethodGet),
+				hx.WhenFailure(hx.AsError()),
+			)
+			if err != nil {
+				t.Errorf("returned %v, want nil", err)
+			}
+		})
+		t.Run(http.MethodPost, func(t *testing.T) {
+			err := hx.Post(context.Background(), ts.URL+"/method",
+				hx.Query("method", http.MethodPost),
+				hx.WhenFailure(hx.AsError()),
+			)
+			if err != nil {
+				t.Errorf("returned %v, want nil", err)
+			}
+		})
+		t.Run(http.MethodPut, func(t *testing.T) {
+			err := hx.Put(context.Background(), ts.URL+"/method",
+				hx.Query("method", http.MethodPut),
+				hx.WhenFailure(hx.AsError()),
+			)
+			if err != nil {
+				t.Errorf("returned %v, want nil", err)
+			}
+		})
+		t.Run(http.MethodPatch, func(t *testing.T) {
+			err := hx.Patch(context.Background(), ts.URL+"/method",
+				hx.Query("method", http.MethodPatch),
+				hx.WhenFailure(hx.AsError()),
+			)
+			if err != nil {
+				t.Errorf("returned %v, want nil", err)
+			}
+		})
+		t.Run(http.MethodDelete, func(t *testing.T) {
+			err := hx.Delete(context.Background(), ts.URL+"/method",
+				hx.Query("method", http.MethodDelete),
+				hx.WhenFailure(hx.AsError()),
+			)
+			if err != nil {
+				t.Errorf("returned %v, want nil", err)
+			}
+		})
 	})
 
 	t.Run("receive json", func(t *testing.T) {
