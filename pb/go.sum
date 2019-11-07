@@ -1,0 +1,4 @@
+github.com/golang/protobuf v1.3.2 h1:6nsPYzhq5kReh6QImI3k5qWzO4PEbvbIW2cwSfR/6xs=
+github.com/golang/protobuf v1.3.2/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
+github.com/izumin5210/hx v0.1.0 h1:sumXXStxjUCm95bjetaa+yW3RIOkcXWgxbrR3qwyzxs=
+github.com/izumin5210/hx v0.1.0/go.mod h1:qk5q6mT+k4oIHnTt6sHNmUF4DG0Ls2wkwg8jN3ZzuP0=
