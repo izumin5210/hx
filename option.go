@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -144,40 +143,12 @@ func Body(v interface{}) Option {
 	}
 }
 
-// FormBody sets data to request body as formm.
-func FormBody(v interface{}) Option {
-	bodyOpt := func() Option {
-		switch v := v.(type) {
-		case io.Reader:
-			return setBodyOption(v)
-		case string:
-			return setBodyOption(strings.NewReader(v))
-		case []byte:
-			return setBodyOption(bytes.NewReader(v))
-		case url.Values:
-			return setBodyOption(strings.NewReader(v.Encode()))
-		default:
-			return newBodyOption(func(context.Context) (io.Reader, error) {
-				return nil, errors.New("failed to encoding request body")
-			})
-		}
-	}()
-	return CombineOptions(
-		bodyOpt,
-		Header("Content-Type", "application/x-www-form-urlencoded"),
-	)
-}
-
 // JSON sets data to request body as json.
 func JSON(v interface{}) Option {
 	bodyOpt := func() Option {
 		switch v := v.(type) {
-		case io.Reader:
-			return setBodyOption(v)
-		case string:
-			return setBodyOption(strings.NewReader(v))
-		case []byte:
-			return setBodyOption(bytes.NewReader(v))
+		case io.Reader, string, []byte:
+			return Body(v)
 		default:
 			return newBodyOption(func(context.Context) (io.Reader, error) {
 				var buf bytes.Buffer

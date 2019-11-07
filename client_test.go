@@ -30,6 +30,19 @@ func TestClient(t *testing.T) {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
+		case r.Method == http.MethodPost && r.URL.Path == "/echo":
+			out := make(map[string]interface{})
+			err := json.NewDecoder(r.Body).Decode(&out)
+			if err != nil || out["message"] == "" {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			w.WriteHeader(http.StatusCreated)
+			err = json.NewEncoder(w).Encode(out)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
 		case r.Method == http.MethodGet && r.URL.Path == "/basic_auth":
 			if user, pass, ok := r.BasicAuth(); !(ok && user == "foo" && pass == "bar") {
 				w.WriteHeader(http.StatusUnauthorized)
