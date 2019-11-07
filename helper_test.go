@@ -65,10 +65,6 @@ func TestCloneTransport(t *testing.T) {
 	}
 }
 
-type fakeStringer struct{}
-
-func (fakeStringer) String() string { return "fakestringer" }
-
 func TestPath(t *testing.T) {
 	cases := []struct {
 		test string
@@ -82,7 +78,7 @@ func TestPath(t *testing.T) {
 		},
 		{
 			test: "stringer",
-			got:  hx.Path("/api", "contents", &fakeStringer{}, "stargazers"),
+			got:  hx.Path("/api", "contents", fakeStringer("fakestringer"), "stargazers"),
 			want: "/api/contents/fakestringer/stargazers",
 		},
 		{

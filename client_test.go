@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -19,6 +20,10 @@ func TestClient(t *testing.T) {
 		switch {
 		case r.Method == http.MethodGet && r.URL.Path == "/ping":
 			r.Write(bytes.NewBufferString("pong"))
+		case r.URL.Path == "/method":
+			if want, got := r.URL.Query().Get("method"), r.Method; got != want {
+				w.WriteHeader(http.StatusBadRequest)
+			}
 		case r.Method == http.MethodGet && r.URL.Path == "/echo":
 			msg := r.URL.Query().Get("message")
 			if msg == "" {
@@ -26,6 +31,19 @@ func TestClient(t *testing.T) {
 				return
 			}
 			err := json.NewEncoder(w).Encode(map[string]string{"message": msg})
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		case r.Method == http.MethodPost && r.URL.Path == "/echo":
+			out := make(map[string]interface{})
+			err := json.NewDecoder(r.Body).Decode(&out)
+			if err != nil || out["message"] == "" {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			w.WriteHeader(http.StatusCreated)
+			err = json.NewEncoder(w).Encode(out)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
@@ -96,6 +114,54 @@ func TestClient(t *testing.T) {
 		if err != nil {
 			t.Errorf("returned %v, want nil", err)
 		}
+	})
+
+	t.Run("method", func(t *testing.T) {
+		t.Run(http.MethodGet, func(t *testing.T) {
+			err := hx.Get(context.Background(), ts.URL+"/method",
+				hx.Query("method", http.MethodGet),
+				hx.WhenFailure(hx.AsError()),
+			)
+			if err != nil {
+				t.Errorf("returned %v, want nil", err)
+			}
+		})
+		t.Run(http.MethodPost, func(t *testing.T) {
+			err := hx.Post(context.Background(), ts.URL+"/method",
+				hx.Query("method", http.MethodPost),
+				hx.WhenFailure(hx.AsError()),
+			)
+			if err != nil {
+				t.Errorf("returned %v, want nil", err)
+			}
+		})
+		t.Run(http.MethodPut, func(t *testing.T) {
+			err := hx.Put(context.Background(), ts.URL+"/method",
+				hx.Query("method", http.MethodPut),
+				hx.WhenFailure(hx.AsError()),
+			)
+			if err != nil {
+				t.Errorf("returned %v, want nil", err)
+			}
+		})
+		t.Run(http.MethodPatch, func(t *testing.T) {
+			err := hx.Patch(context.Background(), ts.URL+"/method",
+				hx.Query("method", http.MethodPatch),
+				hx.WhenFailure(hx.AsError()),
+			)
+			if err != nil {
+				t.Errorf("returned %v, want nil", err)
+			}
+		})
+		t.Run(http.MethodDelete, func(t *testing.T) {
+			err := hx.Delete(context.Background(), ts.URL+"/method",
+				hx.Query("method", http.MethodDelete),
+				hx.WhenFailure(hx.AsError()),
+			)
+			if err != nil {
+				t.Errorf("returned %v, want nil", err)
+			}
+		})
 	})
 
 	t.Run("receive json", func(t *testing.T) {
@@ -174,6 +240,17 @@ func TestClient(t *testing.T) {
 		})
 	})
 
+	t.Run("With BaseURL", func(t *testing.T) {
+		u, _ := url.Parse(ts.URL)
+		cli := hx.NewClient(hx.BaseURL(u))
+		err := cli.Get(context.Background(), "/ping",
+			hx.WhenFailure(hx.AsError()),
+		)
+		if err != nil {
+			t.Errorf("returned %v, want nil", err)
+		}
+	})
+
 	t.Run("With BasicAuth", func(t *testing.T) {
 		t.Run("success", func(t *testing.T) {
 			err := hx.Get(context.Background(), ts.URL+"/basic_auth",
@@ -230,6 +307,19 @@ func TestClient(t *testing.T) {
 		}
 	})
 
+	t.Run("with Client", func(t *testing.T) {
+		cli := &http.Client{
+			Timeout: 10 * time.Millisecond,
+		}
+		err := hx.Get(context.Background(), ts.URL+"/timeout",
+			hx.HTTPClient(cli),
+			hx.WhenFailure(hx.AsError()),
+		)
+		if err == nil {
+			t.Error("returned nil, want an error")
+		}
+	})
+
 	t.Run("with Transport", func(t *testing.T) {
 		transport := &fakeTransport{
 			RoundTripFunc: func(rt http.RoundTripper, req *http.Request) (*http.Response, error) {
@@ -245,6 +335,24 @@ func TestClient(t *testing.T) {
 			t.Errorf("returned %v, want nil", err)
 		}
 	})
+
+	t.Run("with TransportFrom", func(t *testing.T) {
+		err := hx.Get(context.Background(), ts.URL+"/basic_auth",
+			hx.TransportFrom(func(base http.RoundTripper) http.RoundTripper {
+				return &fakeTransport{
+					Base: base,
+					RoundTripFunc: func(rt http.RoundTripper, req *http.Request) (*http.Response, error) {
+						req.SetBasicAuth("foo", "bar")
+						return rt.RoundTrip(req)
+					},
+				}
+			}),
+			hx.WhenFailure(hx.AsError()),
+		)
+		if err != nil {
+			t.Errorf("returned %v, want nil", err)
+		}
+	})
 }
 
 type fakeError struct {
@@ -254,12 +362,12 @@ type fakeError struct {
 func (e fakeError) Error() string { return e.Message }
 
 type fakeTransport struct {
-	base          http.RoundTripper
+	Base          http.RoundTripper
 	RoundTripFunc func(http.RoundTripper, *http.Request) (*http.Response, error)
 }
 
 func (t *fakeTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	base := t.base
+	base := t.Base
 	if base == nil {
 		base = http.DefaultTransport
 	}

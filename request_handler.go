@@ -7,10 +7,6 @@ import (
 
 type RequestHandler func(*http.Client, *http.Request) (*http.Client, *http.Request, error)
 
-func (h RequestHandler) HandleRequest(c *http.Client, r *http.Request) (*http.Client, *http.Request, error) {
-	return h(c, r)
-}
-
 func (h RequestHandler) Apply(c *Config) {
 	c.RequestHandlers = append(c.RequestHandlers, h)
 }
