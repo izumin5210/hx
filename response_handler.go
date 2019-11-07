@@ -8,10 +8,6 @@ import (
 
 type ResponseHandler func(*http.Response, error) (*http.Response, error)
 
-func (h ResponseHandler) HandleResponse(r *http.Response, err error) (*http.Response, error) {
-	return h(r, err)
-}
-
 func (h ResponseHandler) Apply(c *Config) {
 	c.ResponseHandlers = append(c.ResponseHandlers, h)
 }
