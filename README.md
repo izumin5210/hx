@@ -14,6 +14,7 @@ Developer-friendly, Production-ready and extensible HTTP client for Go
 ### Plugins
 
 - [retry](./retry)
+- [pb](./pb) - Marshaling and Unmarshaling protocol buffers
 
 ## Examples
 ### Simple GET
