@@ -37,7 +37,7 @@ err := hx.Get(ctx, "https://api.example.com/contents/1",
 
 ```go
 func init() {
-	defaultTransport := hx.CloneTransport(http.DefaultTransport)
+	defaultTransport := hx.CloneTransport(http.DefaultTransport.(*http.Transport))
 
 	// Tweak keep-alive configuration
 	defaultTransport.MaxIdleConns = 500
