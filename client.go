@@ -61,7 +61,7 @@ func (c *Client) Delete(ctx context.Context, url string, opts ...Option) error {
 func (c *Client) request(ctx context.Context, meth string, url string, opts ...Option) error {
 	var err error
 
-	cfg := new(Config)
+	cfg := NewConfig()
 	cfg.Apply(c.opts...)
 	cfg.Apply(URL(url))
 	cfg.Apply(opts...)
