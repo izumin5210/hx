@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/izumin5210/hx/hxutil"
 )
 
 type ResponseHandler func(*http.Response, error) (*http.Response, error)
@@ -51,7 +53,7 @@ func AsError() ResponseHandler {
 		if r == nil || err != nil {
 			return r, err
 		}
-		err = DrainResponseBody(r)
+		err = hxutil.DrainResponseBody(r)
 		if err != nil {
 			return nil, &ResponseError{Response: r, Err: err}
 		}
