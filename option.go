@@ -20,17 +20,17 @@ var (
 )
 
 type Option interface {
-	Apply(*Config)
+	ApplyOption(*Config)
 }
 
 type OptionFunc func(*Config)
 
-func (f OptionFunc) Apply(c *Config) { f(c) }
+func (f OptionFunc) ApplyOption(c *Config) { f(c) }
 
 func CombineOptions(opts ...Option) Option {
 	return OptionFunc(func(c *Config) {
 		for _, o := range opts {
-			o.Apply(c)
+			o.ApplyOption(c)
 		}
 	})
 }

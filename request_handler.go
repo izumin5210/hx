@@ -7,7 +7,7 @@ import (
 
 type RequestHandler func(*http.Client, *http.Request) (*http.Client, *http.Request, error)
 
-func (h RequestHandler) Apply(c *Config) {
+func (h RequestHandler) ApplyOption(c *Config) {
 	c.RequestHandlers = append(c.RequestHandlers, h)
 }
 

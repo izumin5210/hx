@@ -22,7 +22,7 @@ func NewConfig() *Config {
 
 func (cfg *Config) Apply(opts ...Option) {
 	for _, f := range opts {
-		f.Apply(cfg)
+		f.ApplyOption(cfg)
 	}
 }
 
