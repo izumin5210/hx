@@ -112,8 +112,8 @@ func TestProto(t *testing.T) {
 			},
 		}
 		err := hx.Post(context.Background(), ts.URL+"/echo",
-			protoCfg.Proto(&overwrited),
-			hx.WhenSuccess(pb.AsProto(&got)),
+			pb.Proto(&overwrited),
+			hx.WhenSuccess(protoCfg.AsProto(&got)),
 			hx.WhenFailure(hx.AsError()),
 		)
 		if err != nil {
