@@ -106,8 +106,8 @@ func TestJSON(t *testing.T) {
 			},
 		}
 		err := hx.Post(context.Background(), ts.URL+"/echo",
-			jsonCfg.JSON(&overwrited),
-			hx.WhenSuccess(pb.AsJSON(&got)),
+			pb.JSON(&overwrited),
+			hx.WhenSuccess(jsonCfg.AsJSON(&got)),
 			hx.WhenFailure(hx.AsError()),
 		)
 		if err != nil {
