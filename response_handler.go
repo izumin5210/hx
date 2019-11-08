@@ -8,7 +8,7 @@ import (
 
 type ResponseHandler func(*http.Response, error) (*http.Response, error)
 
-func (h ResponseHandler) Apply(c *Config) {
+func (h ResponseHandler) ApplyOption(c *Config) {
 	c.ResponseHandlers = append(c.ResponseHandlers, h)
 }
 
