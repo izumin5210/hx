@@ -14,6 +14,12 @@ type Config struct {
 	ResponseHandlers []ResponseHandler
 }
 
+func NewConfig() *Config {
+	cfg := new(Config)
+	cfg.Apply(DefaultOptions...)
+	return cfg
+}
+
 func (cfg *Config) Apply(opts ...Option) {
 	for _, f := range opts {
 		f.Apply(cfg)
