@@ -9,20 +9,20 @@ import (
 
 type RequestHandler func(*http.Client, *http.Request) (*http.Client, *http.Request, error)
 
-func (h RequestHandler) ApplyOption(c *Config) {
-	c.RequestHandlers = append(c.RequestHandlers, h)
+func HandleRequest(f func(*http.Client, *http.Request) (*http.Client, *http.Request, error)) Option {
+	return OptionFunc(func(c *Config) { c.RequestHandlers = append(c.RequestHandlers, f) })
 }
 
 // HTTPClient sets a HTTP client that used to send HTTP request(s).
 func HTTPClient(c *http.Client) Option {
-	return RequestHandler(func(_ *http.Client, r *http.Request) (*http.Client, *http.Request, error) {
+	return HandleRequest(func(_ *http.Client, r *http.Request) (*http.Client, *http.Request, error) {
 		return c, r, nil
 	})
 }
 
 // Transport sets the round tripper to http.Client.
 func Transport(rt http.RoundTripper) Option {
-	return RequestHandler(func(c *http.Client, r *http.Request) (*http.Client, *http.Request, error) {
+	return HandleRequest(func(c *http.Client, r *http.Request) (*http.Client, *http.Request, error) {
 		c.Transport = rt
 		return c, r, nil
 	})
@@ -30,7 +30,7 @@ func Transport(rt http.RoundTripper) Option {
 
 // TransportFrom sets the round tripper to http.Client.
 func TransportFrom(f func(http.RoundTripper) http.RoundTripper) Option {
-	return RequestHandler(func(c *http.Client, r *http.Request) (*http.Client, *http.Request, error) {
+	return HandleRequest(func(c *http.Client, r *http.Request) (*http.Client, *http.Request, error) {
 		c.Transport = f(c.Transport)
 		return c, r, nil
 	})
@@ -42,7 +42,7 @@ func TransportFunc(f func(*http.Request, http.RoundTripper) (*http.Response, err
 
 // Timeout sets the max duration for http request(s).
 func Timeout(t time.Duration) Option {
-	return RequestHandler(func(c *http.Client, r *http.Request) (*http.Client, *http.Request, error) {
+	return HandleRequest(func(c *http.Client, r *http.Request) (*http.Client, *http.Request, error) {
 		c.Timeout = t
 		return c, r, nil
 	})
@@ -50,7 +50,7 @@ func Timeout(t time.Duration) Option {
 
 // BasicAuth sets an username and a password for basic authentication.
 func BasicAuth(username, password string) Option {
-	return RequestHandler(func(c *http.Client, r *http.Request) (*http.Client, *http.Request, error) {
+	return HandleRequest(func(c *http.Client, r *http.Request) (*http.Client, *http.Request, error) {
 		r.SetBasicAuth(username, password)
 		return c, r, nil
 	})
@@ -58,7 +58,7 @@ func BasicAuth(username, password string) Option {
 
 // Header sets a value to request header.
 func Header(k, v string) Option {
-	return RequestHandler(func(c *http.Client, r *http.Request) (*http.Client, *http.Request, error) {
+	return HandleRequest(func(c *http.Client, r *http.Request) (*http.Client, *http.Request, error) {
 		r.Header.Set(k, v)
 		return c, r, nil
 	})
