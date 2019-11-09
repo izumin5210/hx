@@ -3,6 +3,8 @@ package hx
 import (
 	"net/http"
 	"time"
+
+	"github.com/izumin5210/hx/hxutil"
 )
 
 type RequestHandler func(*http.Client, *http.Request) (*http.Client, *http.Request, error)
@@ -32,6 +34,10 @@ func TransportFrom(f func(http.RoundTripper) http.RoundTripper) Option {
 		c.Transport = f(c.Transport)
 		return c, r, nil
 	})
+}
+
+func TransportFunc(f func(*http.Request, http.RoundTripper) (*http.Response, error)) Option {
+	return TransportFrom(hxutil.RoundTripperFunc(f).Wrap)
 }
 
 // Timeout sets the max duration for http request(s).

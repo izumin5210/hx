@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/izumin5210/hx"
+	"github.com/izumin5210/hx/hxutil"
 )
 
 func TestClient(t *testing.T) {
@@ -321,8 +322,8 @@ func TestClient(t *testing.T) {
 	})
 
 	t.Run("with Transport", func(t *testing.T) {
-		transport := &fakeTransport{
-			RoundTripFunc: func(rt http.RoundTripper, req *http.Request) (*http.Response, error) {
+		transport := &hxutil.RoundTripperWrapper{
+			Func: func(req *http.Request, rt http.RoundTripper) (*http.Response, error) {
 				req.SetBasicAuth("foo", "bar")
 				return rt.RoundTrip(req)
 			},
@@ -339,13 +340,25 @@ func TestClient(t *testing.T) {
 	t.Run("with TransportFrom", func(t *testing.T) {
 		err := hx.Get(context.Background(), ts.URL+"/basic_auth",
 			hx.TransportFrom(func(base http.RoundTripper) http.RoundTripper {
-				return &fakeTransport{
-					Base: base,
-					RoundTripFunc: func(rt http.RoundTripper, req *http.Request) (*http.Response, error) {
+				return &hxutil.RoundTripperWrapper{
+					Func: func(req *http.Request, rt http.RoundTripper) (*http.Response, error) {
 						req.SetBasicAuth("foo", "bar")
 						return rt.RoundTrip(req)
 					},
 				}
+			}),
+			hx.WhenFailure(hx.AsError()),
+		)
+		if err != nil {
+			t.Errorf("returned %v, want nil", err)
+		}
+	})
+
+	t.Run("with TransportFunc", func(t *testing.T) {
+		err := hx.Get(context.Background(), ts.URL+"/basic_auth",
+			hx.TransportFunc(func(r *http.Request, next http.RoundTripper) (*http.Response, error) {
+				r.SetBasicAuth("foo", "bar")
+				return next.RoundTrip(r)
 			}),
 			hx.WhenFailure(hx.AsError()),
 		)
@@ -360,16 +373,3 @@ type fakeError struct {
 }
 
 func (e fakeError) Error() string { return e.Message }
-
-type fakeTransport struct {
-	Base          http.RoundTripper
-	RoundTripFunc func(http.RoundTripper, *http.Request) (*http.Response, error)
-}
-
-func (t *fakeTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	base := t.Base
-	if base == nil {
-		base = http.DefaultTransport
-	}
-	return t.RoundTripFunc(base, req)
-}
