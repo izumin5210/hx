@@ -2,7 +2,6 @@ package hx
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/izumin5210/hx/hxutil"
@@ -12,26 +11,6 @@ type ResponseHandler func(*http.Response, error) (*http.Response, error)
 
 func HandleResponse(f func(*http.Response, error) (*http.Response, error)) Option {
 	return OptionFunc(func(c *Config) { c.ResponseHandlers = append(c.ResponseHandlers, f) })
-}
-
-type ResponseError struct {
-	Response *http.Response
-	Err      error
-}
-
-func (e *ResponseError) Error() string {
-	msg := fmt.Sprintf("the server responeded with status %d", e.Response.StatusCode)
-	if e.Err != nil {
-		msg = fmt.Sprintf("%s: %s", msg, e.Err.Error())
-	}
-	return msg
-}
-
-func (e *ResponseError) Unwrap() error {
-	if e.Err != nil {
-		return e.Err
-	}
-	return e
 }
 
 func AsJSON(dst interface{}) ResponseHandler {
@@ -124,7 +103,7 @@ func IsFailure() ResponseHandlerCond     { return Not(IsSuccess()) }
 func IsClientError() ResponseHandlerCond { return checkStatus(func(c int) bool { return c/100 == 4 }) }
 func IsServerError() ResponseHandlerCond { return checkStatus(func(c int) bool { return c/100 == 5 }) }
 func IsNetworkError() ResponseHandlerCond {
-	return func(r *http.Response, err error) bool { return err != nil }
+	return func(r *http.Response, err error) bool { return isNetworkError(err) }
 }
 func IsStatus(codes ...int) ResponseHandlerCond {
 	m := make(map[int]struct{}, len(codes))
