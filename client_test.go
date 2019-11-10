@@ -373,3 +373,53 @@ type fakeError struct {
 }
 
 func (e fakeError) Error() string { return e.Message }
+
+func TestClient_With(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/echo":
+			err := json.NewEncoder(w).Encode(map[string]string{"message": r.Header.Get("Message")})
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer ts.Close()
+
+	type Response struct {
+		Message string `json:"message"`
+	}
+
+	cli := hx.NewClient(
+		hx.Header("Message", "foo"),
+		hx.WhenFailure(hx.AsError()),
+	)
+
+	var resp1 Response
+	err := cli.Get(context.Background(), ts.URL+"/echo",
+		hx.WhenSuccess(hx.AsJSON(&resp1)),
+	)
+	if err != nil {
+		t.Errorf("returned %v, want nil", err)
+	}
+	if got, want := resp1.Message, "foo"; got != want {
+		t.Errorf("returned %q, want %q", got, want)
+	}
+
+	var resp2 Response
+	cli = cli.With(
+		hx.Header("Message", "bar"),
+	)
+	err = cli.Get(context.Background(), ts.URL+"/echo",
+		hx.WhenSuccess(hx.AsJSON(&resp2)),
+	)
+	if err != nil {
+		t.Errorf("returned %v, want nil", err)
+	}
+	if got, want := resp2.Message, "bar"; got != want {
+		t.Errorf("returned %q, want %q", got, want)
+	}
+}
