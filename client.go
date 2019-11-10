@@ -58,6 +58,7 @@ func (c *Client) Delete(ctx context.Context, url string, opts ...Option) error {
 	return c.request(ctx, http.MethodDelete, url, opts...)
 }
 
+// With clones the current client and applies the given options.
 func (c *Client) With(opts ...Option) *Client {
 	newOpts := make([]Option, 0, len(c.opts)+len(opts))
 	newOpts = append(newOpts, c.opts...)
