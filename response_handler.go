@@ -10,8 +10,8 @@ import (
 
 type ResponseHandler func(*http.Response, error) (*http.Response, error)
 
-func (h ResponseHandler) ApplyOption(c *Config) {
-	c.ResponseHandlers = append(c.ResponseHandlers, h)
+func HandleResponse(f func(*http.Response, error) (*http.Response, error)) Option {
+	return OptionFunc(func(c *Config) { c.ResponseHandlers = append(c.ResponseHandlers, f) })
 }
 
 type ResponseError struct {
@@ -135,7 +135,7 @@ func IsStatus(codes ...int) ResponseHandlerCond {
 }
 
 func When(cond ResponseHandlerCond, rh ResponseHandler) Option {
-	return ResponseHandler(func(resp *http.Response, err error) (*http.Response, error) {
+	return HandleResponse(func(resp *http.Response, err error) (*http.Response, error) {
 		if cond(resp, err) {
 			return rh(resp, err)
 		}

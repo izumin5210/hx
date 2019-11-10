@@ -2,64 +2,39 @@ package hx
 
 import (
 	"net/http"
-	"time"
-
-	"github.com/izumin5210/hx/hxutil"
 )
 
-type RequestHandler func(*http.Client, *http.Request) (*http.Client, *http.Request, error)
+type RequestHandler func(*http.Request) (*http.Request, error)
 
-func (h RequestHandler) ApplyOption(c *Config) {
-	c.RequestHandlers = append(c.RequestHandlers, h)
-}
-
-// HTTPClient sets a HTTP client that used to send HTTP request(s).
-func HTTPClient(c *http.Client) Option {
-	return RequestHandler(func(_ *http.Client, r *http.Request) (*http.Client, *http.Request, error) {
-		return c, r, nil
-	})
-}
-
-// Transport sets the round tripper to http.Client.
-func Transport(rt http.RoundTripper) Option {
-	return RequestHandler(func(c *http.Client, r *http.Request) (*http.Client, *http.Request, error) {
-		c.Transport = rt
-		return c, r, nil
-	})
-}
-
-// TransportFrom sets the round tripper to http.Client.
-func TransportFrom(f func(http.RoundTripper) http.RoundTripper) Option {
-	return RequestHandler(func(c *http.Client, r *http.Request) (*http.Client, *http.Request, error) {
-		c.Transport = f(c.Transport)
-		return c, r, nil
-	})
-}
-
-func TransportFunc(f func(*http.Request, http.RoundTripper) (*http.Response, error)) Option {
-	return TransportFrom(hxutil.RoundTripperFunc(f).Wrap)
-}
-
-// Timeout sets the max duration for http request(s).
-func Timeout(t time.Duration) Option {
-	return RequestHandler(func(c *http.Client, r *http.Request) (*http.Client, *http.Request, error) {
-		c.Timeout = t
-		return c, r, nil
-	})
+func HandleRequest(f func(*http.Request) (*http.Request, error)) Option {
+	return OptionFunc(func(c *Config) { c.RequestHandlers = append(c.RequestHandlers, f) })
 }
 
 // BasicAuth sets an username and a password for basic authentication.
 func BasicAuth(username, password string) Option {
-	return RequestHandler(func(c *http.Client, r *http.Request) (*http.Client, *http.Request, error) {
+	return HandleRequest(func(r *http.Request) (*http.Request, error) {
 		r.SetBasicAuth(username, password)
-		return c, r, nil
+		return r, nil
 	})
 }
 
 // Header sets a value to request header.
 func Header(k, v string) Option {
-	return RequestHandler(func(c *http.Client, r *http.Request) (*http.Client, *http.Request, error) {
+	return HandleRequest(func(r *http.Request) (*http.Request, error) {
 		r.Header.Set(k, v)
-		return c, r, nil
+		return r, nil
 	})
+}
+
+// Authorization sets an authorization scheme and a token of an user.
+func Authorization(scheme, token string) Option {
+	return Header("Authorization", scheme+" "+token)
+}
+
+func Bearer(token string) Option {
+	return Authorization("Bearer", token)
+}
+
+func UserAgent(ua string) Option {
+	return Header("User-Agent", ua)
 }
