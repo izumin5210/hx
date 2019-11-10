@@ -3,16 +3,14 @@ coverage:
     project:
       default:
         target: 85%
-        flags: core
+        paths:
+          - '!pb/'
       pb:
         target: 75%
         flags: pb
     patch: off
 
 flags:
-  core:
-    paths:
-      - '!pb/'
   pb:
     paths:
       - 'pb/'

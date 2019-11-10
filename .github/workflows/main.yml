@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         go-version: ['1.12.x', '1.13.x']
-        module: ['core', 'pb']
+        module: ['', 'pb']
       fail-fast: false
 
     steps:
@@ -19,24 +19,12 @@ jobs:
  
     - uses: actions/checkout@v1
 
-    # for core modules
-    - run: go test -v -race -coverprofile coverage.txt -covermode atomic ./...
-      if: matrix.module == 'core'
-
-    - uses: codecov/codecov-action@v1.0.3
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        flags: 'core'
-      if: matrix.go-version == '1.13.x' && matrix.module == 'core'
-
-    # for submodules
     - run: go test -v -race -coverprofile coverage.txt -covermode atomic ./...
       working-directory: ${{ matrix.module }}
-      if: matrix.module != 'core'
 
     - uses: codecov/codecov-action@v1.0.3
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         flags: ${{ matrix.module }}
         file: ./${{ matrix.module }}/coverage.txt
-      if: matrix.go-version == '1.13.x' && matrix.module != 'core'
+      if: matrix.go-version == '1.13.x'
