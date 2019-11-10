@@ -13,10 +13,14 @@ import (
 
 var DefaultJSONConfig = &JSONConfig{}
 
+// JSON sets proto.Message to request body as json.
+// This will marshal a given data with jsonpb.Marshaler in default.
 func JSON(pb proto.Message) hx.Option {
 	return DefaultJSONConfig.JSON(pb)
 }
 
+// AsJSON is hx.ResponseHandler for unmarshaling response bodies as JSON.
+// This will unmarshal a received data with jsonpb.Unmarshaler in default.
 func AsJSON(pb proto.Message) hx.ResponseHandler {
 	return DefaultJSONConfig.AsJSON(pb)
 }
