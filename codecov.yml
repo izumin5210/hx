@@ -16,3 +16,4 @@ flags:
   pb:
     paths:
       - 'pb/'
+    joined: false
