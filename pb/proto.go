@@ -10,12 +10,14 @@ import (
 	"github.com/izumin5210/hx"
 )
 
+var DefaultProtoConfig = &ProtoConfig{}
+
 func Proto(pb proto.Message) hx.Option {
-	return (&ProtoConfig{}).Proto(pb)
+	return DefaultProtoConfig.Proto(pb)
 }
 
 func AsProto(pb proto.Message) hx.ResponseHandler {
-	return (&ProtoConfig{}).AsProto(pb)
+	return DefaultProtoConfig.AsProto(pb)
 }
 
 type ProtoConfig struct {

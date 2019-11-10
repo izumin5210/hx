@@ -11,12 +11,14 @@ import (
 	"github.com/izumin5210/hx"
 )
 
+var DefaultJSONConfig = &JSONConfig{}
+
 func JSON(pb proto.Message) hx.Option {
-	return (&JSONConfig{}).JSON(pb)
+	return DefaultJSONConfig.JSON(pb)
 }
 
 func AsJSON(pb proto.Message) hx.ResponseHandler {
-	return (&JSONConfig{}).AsJSON(pb)
+	return DefaultJSONConfig.AsJSON(pb)
 }
 
 type JSONConfig struct {
