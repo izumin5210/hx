@@ -7,9 +7,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"runtime"
 	"strings"
+	"time"
+
+	"github.com/izumin5210/hx/hxutil"
 )
 
 var (
@@ -51,6 +55,12 @@ func setBodyOption(r io.Reader) Option {
 	return newBodyOption(func(context.Context) (io.Reader, error) { return r, nil })
 }
 
+func newClientOption(f func(context.Context, *http.Client) error) Option {
+	return OptionFunc(func(c *Config) {
+		c.ClientOptions = append(c.ClientOptions, f)
+	})
+}
+
 func BaseURL(baseURL *url.URL) Option {
 	return newURLOption(func(_ context.Context, dest *url.URL) error {
 		*dest = *baseURL
@@ -81,19 +91,6 @@ func Query(k, v string) Option {
 		u.RawQuery = q.Encode()
 		return nil
 	})
-}
-
-// Authorization sets an authorization scheme and a token of an user.
-func Authorization(scheme, token string) Option {
-	return Header("Authorization", scheme+" "+token)
-}
-
-func Bearer(token string) Option {
-	return Authorization("Bearer", token)
-}
-
-func UserAgent(ua string) Option {
-	return Header("User-Agent", ua)
 }
 
 // Body sets data to request body.
@@ -164,4 +161,40 @@ func JSON(v interface{}) Option {
 		bodyOpt,
 		Header("Content-Type", "application/json"),
 	)
+}
+
+// HTTPClient sets a HTTP client that used to send HTTP request(s).
+func HTTPClient(c *http.Client) Option {
+	return newClientOption(func(_ context.Context, old *http.Client) error {
+		*old = *c
+		return nil
+	})
+}
+
+// Transport sets the round tripper to http.Client.
+func Transport(rt http.RoundTripper) Option {
+	return newClientOption(func(_ context.Context, c *http.Client) error {
+		c.Transport = rt
+		return nil
+	})
+}
+
+// TransportFrom sets the round tripper to http.Client.
+func TransportFrom(f func(http.RoundTripper) http.RoundTripper) Option {
+	return newClientOption(func(_ context.Context, c *http.Client) error {
+		c.Transport = f(c.Transport)
+		return nil
+	})
+}
+
+func TransportFunc(f func(*http.Request, http.RoundTripper) (*http.Response, error)) Option {
+	return TransportFrom(hxutil.RoundTripperFunc(f).Wrap)
+}
+
+// Timeout sets the max duration for http request(s).
+func Timeout(t time.Duration) Option {
+	return newClientOption(func(_ context.Context, c *http.Client) error {
+		c.Timeout = t
+		return nil
+	})
 }

@@ -10,6 +10,7 @@ import (
 type Config struct {
 	URLOptions       []func(context.Context, *url.URL) error
 	BodyOption       func(context.Context) (io.Reader, error)
+	ClientOptions    []func(context.Context, *http.Client) error
 	RequestHandlers  []RequestHandler
 	ResponseHandlers []ResponseHandler
 }
@@ -37,16 +38,20 @@ func (cfg *Config) DoRequest(ctx context.Context, meth string) (*http.Response, 
 		return nil, err
 	}
 
+	cli, err := cfg.buildClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	req, err := http.NewRequest(meth, url.String(), body)
 	if err != nil {
 		return nil, err
 	}
 
 	req = req.WithContext(ctx)
-	cli := new(http.Client)
 
 	for _, h := range cfg.RequestHandlers {
-		cli, req, err = h(cli, req)
+		req, err = h(req)
 		if err != nil {
 			return nil, err
 		}
@@ -87,4 +92,17 @@ func (cfg *Config) buildBody(ctx context.Context) (io.Reader, error) {
 		return nil, err
 	}
 	return body, nil
+}
+
+func (cfg *Config) buildClient(ctx context.Context) (*http.Client, error) {
+	c := new(http.Client)
+
+	for _, f := range cfg.ClientOptions {
+		err := f(ctx, c)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return c, nil
 }
