@@ -10,12 +10,18 @@ import (
 	"github.com/izumin5210/hx"
 )
 
+var DefaultProtoConfig = &ProtoConfig{}
+
+// Proto sets proto.Message to request body as protocol buffers.
+// This will marshal a given data with proto.Marshal in default.
 func Proto(pb proto.Message) hx.Option {
-	return (&ProtoConfig{}).Proto(pb)
+	return DefaultProtoConfig.Proto(pb)
 }
 
+// AsProto is hx.ResponseHandler for unmarshaling response bodies as Proto.
+// This will unmarshal a received data with proto.Unmarshal marshaler in default.
 func AsProto(pb proto.Message) hx.ResponseHandler {
-	return (&ProtoConfig{}).AsProto(pb)
+	return DefaultProtoConfig.AsProto(pb)
 }
 
 type ProtoConfig struct {
