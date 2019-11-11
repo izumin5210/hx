@@ -2,5 +2,5 @@ github.com/cenkalti/backoff/v3 v3.0.0 h1:ske+9nBpD9qZsTBoF41nW5L+AIuFBKMeze18XQ3
 github.com/cenkalti/backoff/v3 v3.0.0/go.mod h1:cIeZDE3IrqwwJl6VUwCN6trj1oXrTS4rc0ij+ULvLYs=
 github.com/google/uuid v1.1.1 h1:Gkbcsh/GbpXz7lPftLA3P6TYMwjCLYm83jiFQZF/3gY=
 github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/izumin5210/hx v0.1.0 h1:sumXXStxjUCm95bjetaa+yW3RIOkcXWgxbrR3qwyzxs=
-github.com/izumin5210/hx v0.1.0/go.mod h1:qk5q6mT+k4oIHnTt6sHNmUF4DG0Ls2wkwg8jN3ZzuP0=
+github.com/izumin5210/hx v0.2.0 h1:6M8Pos1ijoTcpmzZ7bOtlSwFDow1lwOLJbbuFKg4Vx0=
+github.com/izumin5210/hx v0.2.0/go.mod h1:qk5q6mT+k4oIHnTt6sHNmUF4DG0Ls2wkwg8jN3ZzuP0=
