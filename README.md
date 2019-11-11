@@ -88,7 +88,7 @@ func (a *ContentAPI) CreateContent(ctx context.Context, in *Content) (*Content, 
 	err := a.client.Post(ctx, "/api/contents",
 		hx.JSON(in),
 		hx.WhenSuccess(hx.AsJSON(&out)),
-		hx.WhenStatus(hx.AsErrorOf(&InvalidArgument{}), http.StatusBadRequest),
+		hx.WhenStatus(hx.AsJSONError(&InvalidArgument{}), http.StatusBadRequest),
 		hx.WhenFailure(hx.AsError()),
 	)
 
