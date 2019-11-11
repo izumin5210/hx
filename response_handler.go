@@ -102,8 +102,8 @@ func IsSuccess() ResponseHandlerCond     { return checkStatus(func(c int) bool {
 func IsFailure() ResponseHandlerCond     { return Not(IsSuccess()) }
 func IsClientError() ResponseHandlerCond { return checkStatus(func(c int) bool { return c/100 == 4 }) }
 func IsServerError() ResponseHandlerCond { return checkStatus(func(c int) bool { return c/100 == 5 }) }
-func IsNetworkError() ResponseHandlerCond {
-	return func(r *http.Response, err error) bool { return isNetworkError(err) }
+func IsRoundTripError() ResponseHandlerCond {
+	return func(r *http.Response, err error) bool { return isRoundTripError(err) }
 }
 func IsStatus(codes ...int) ResponseHandlerCond {
 	m := make(map[int]struct{}, len(codes))

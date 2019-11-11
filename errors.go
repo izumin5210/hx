@@ -6,28 +6,28 @@ import (
 )
 
 var (
-	_ error = (*NetworkError)(nil)
+	_ error = (*RoundTripError)(nil)
 	_ error = (*ResponseError)(nil)
 )
 
-type NetworkError struct {
+type RoundTripError struct {
 	Err error
 }
 
-func (e *NetworkError) Error() string {
+func (e *RoundTripError) Error() string {
 	return fmt.Sprintf("failed to roundtrip: %v", e.Err)
 }
 
-func (e *NetworkError) Unwrap() error {
+func (e *RoundTripError) Unwrap() error {
 	return e.Err
 }
 
-func isNetworkError(err error) bool {
+func isRoundTripError(err error) bool {
 	if err == nil {
 		return false
 	}
 	for {
-		if _, ok := err.(*NetworkError); ok {
+		if _, ok := err.(*RoundTripError); ok {
 			return true
 		}
 		u, ok := err.(interface{ Unwrap() error })
@@ -39,10 +39,10 @@ func isNetworkError(err error) bool {
 	return false
 }
 
-func wrapNetworkError(r *http.Request, rt http.RoundTripper) (*http.Response, error) {
+func wrapRoundTripError(r *http.Request, rt http.RoundTripper) (*http.Response, error) {
 	resp, err := rt.RoundTrip(r)
 	if err != nil {
-		err = &NetworkError{Err: err}
+		err = &RoundTripError{Err: err}
 	}
 
 	return resp, err

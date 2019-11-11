@@ -95,7 +95,7 @@ func TestResponseHandlerCond(t *testing.T) {
 				err := hx.Get(ctx, ts.URL+"/ping",
 					hx.Timeout(10*time.Millisecond),
 					hx.Query("status", fmt.Sprint(st)),
-					hx.When(hx.IsNetworkError(), hx.AsError()),
+					hx.When(hx.IsRoundTripError(), hx.AsError()),
 				)
 				if err != nil {
 					t.Errorf("returned %v, want nil", err)
@@ -105,7 +105,7 @@ func TestResponseHandlerCond(t *testing.T) {
 		t.Run("when server stopped", func(t *testing.T) {
 			err := hx.Get(ctx, fmt.Sprintf("http://localhost:%d/ping", freePort),
 				hx.Timeout(10*time.Millisecond),
-				hx.When(hx.IsNetworkError(), hx.AsError()),
+				hx.When(hx.IsRoundTripError(), hx.AsError()),
 			)
 			if err == nil {
 				t.Error("returned nil, want an error")
@@ -114,7 +114,7 @@ func TestResponseHandlerCond(t *testing.T) {
 	})
 
 	t.Run("Any", func(t *testing.T) {
-		cond := hx.Any(hx.IsServerError(), hx.IsNetworkError())
+		cond := hx.Any(hx.IsServerError(), hx.IsRoundTripError())
 		t.Run(fmt.Sprint(500), func(t *testing.T) {
 			err := hx.Get(ctx, ts.URL+"/ping",
 				hx.Timeout(10*time.Millisecond),

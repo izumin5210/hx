@@ -20,7 +20,7 @@ var (
 	DefaultUserAgent = fmt.Sprintf("hx/%s; %s", Version, runtime.Version())
 	DefaultOptions   = []Option{
 		UserAgent(DefaultUserAgent),
-		TransportFunc(wrapNetworkError),
+		TransportFunc(wrapRoundTripError),
 	}
 )
 
@@ -179,7 +179,7 @@ func Transport(rt http.RoundTripper) Option {
 			c.Transport = rt
 			return nil
 		}),
-		TransportFunc(wrapNetworkError),
+		TransportFunc(wrapRoundTripError),
 	)
 }
 

@@ -10,7 +10,7 @@ bo.InitialInterval = 50 * time.Millisecond
 bo.MaxInterval = 500 * time.Millisecond
 
 err := hx.Get(ctx, "https://api.example.com/contents/1",
-	retry.When(hx.Any(hx.IsServerError(), hx.IsNetworkError()), bo),
+	retry.When(hx.Any(hx.IsServerError(), hx.IsRoundTripError()), bo),
 	hx.WhenSuccess(hx.AsJSON(&cont)),
 	hx.WhenFailure(hx.AsError()),
 )
