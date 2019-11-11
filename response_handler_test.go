@@ -89,32 +89,46 @@ func TestResponseHandlerCond(t *testing.T) {
 		}
 	})
 
-	t.Run("network error", func(t *testing.T) {
+	t.Run("temporary error", func(t *testing.T) {
 		for _, st := range []int{400, 500} {
 			t.Run(fmt.Sprint(st), func(t *testing.T) {
+				var handled bool
 				err := hx.Get(ctx, ts.URL+"/ping",
 					hx.Timeout(10*time.Millisecond),
 					hx.Query("status", fmt.Sprint(st)),
-					hx.When(hx.IsNetworkError(), hx.AsError()),
+					hx.When(hx.IsTemporaryError(), func(r *http.Response, e error) (*http.Response, error) {
+						handled = true
+						return r, e
+					}),
 				)
 				if err != nil {
 					t.Errorf("returned %v, want nil", err)
 				}
+				if handled {
+					t.Errorf("should not handle error as temporary: %v", err)
+				}
 			})
 		}
 		t.Run("when server stopped", func(t *testing.T) {
+			var handled bool
 			err := hx.Get(ctx, fmt.Sprintf("http://localhost:%d/ping", freePort),
 				hx.Timeout(10*time.Millisecond),
-				hx.When(hx.IsNetworkError(), hx.AsError()),
+				hx.When(hx.IsTemporaryError(), func(r *http.Response, e error) (*http.Response, error) {
+					handled = true
+					return r, e
+				}),
 			)
 			if err == nil {
 				t.Error("returned nil, want an error")
+			}
+			if !handled {
+				t.Errorf("should handle error as temporary: %v", err)
 			}
 		})
 	})
 
 	t.Run("Any", func(t *testing.T) {
-		cond := hx.Any(hx.IsServerError(), hx.IsNetworkError())
+		cond := hx.Any(hx.IsServerError(), hx.IsTemporaryError())
 		t.Run(fmt.Sprint(500), func(t *testing.T) {
 			err := hx.Get(ctx, ts.URL+"/ping",
 				hx.Timeout(10*time.Millisecond),
