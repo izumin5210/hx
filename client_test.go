@@ -221,9 +221,9 @@ func TestClient(t *testing.T) {
 			checkErrorIsWrapped(t, err)
 		})
 
-		t.Run("AsErrorOf", func(t *testing.T) {
+		t.Run("AsJSONError", func(t *testing.T) {
 			err := hx.Get(context.Background(), ts.URL+"/error",
-				hx.WhenStatus(hx.AsErrorOf(&fakeError{}), http.StatusBadRequest),
+				hx.WhenStatus(hx.AsJSONError(&fakeError{}), http.StatusBadRequest),
 				hx.WhenFailure(hx.AsError()),
 			)
 			if err == nil {

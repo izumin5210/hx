@@ -61,7 +61,7 @@ func AsError() ResponseHandler {
 	}
 }
 
-// AsErrorOf is ResponseHandler that will populate an error with the JSON returned within the response body.
+// AsJSONError is ResponseHandler that will populate an error with the JSON returned within the response body.
 // And it will wrap the error with ResponseError and return it.
 //  err := hx.Post(ctx, "https://example.com/posts",
 //  	hx.JSON(body)
@@ -83,7 +83,7 @@ func AsError() ResponseHandler {
 //  		// handle unknown error
 //  	}
 //  }
-func AsErrorOf(dst error) ResponseHandler {
+func AsJSONError(dst error) ResponseHandler {
 	return func(r *http.Response, err error) (*http.Response, error) {
 		if r == nil || err != nil {
 			return r, err
