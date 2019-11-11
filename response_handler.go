@@ -123,8 +123,11 @@ func IsSuccess() ResponseHandlerCond     { return checkStatus(func(c int) bool {
 func IsFailure() ResponseHandlerCond     { return Not(IsSuccess()) }
 func IsClientError() ResponseHandlerCond { return checkStatus(func(c int) bool { return c/100 == 4 }) }
 func IsServerError() ResponseHandlerCond { return checkStatus(func(c int) bool { return c/100 == 5 }) }
-func IsNetworkError() ResponseHandlerCond {
-	return func(r *http.Response, err error) bool { return err != nil }
+func IsTemporaryError() ResponseHandlerCond {
+	return func(r *http.Response, err error) bool {
+		terr, ok := err.(interface{ Temporary() bool })
+		return ok && terr.Temporary()
+	}
 }
 func IsStatus(codes ...int) ResponseHandlerCond {
 	m := make(map[int]struct{}, len(codes))
