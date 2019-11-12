@@ -50,8 +50,13 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 
 	setIdempotencyKey(req)
 
+	next := t.parent
+	if next == nil {
+		next = http.DefaultTransport
+	}
+
 	_ = backoff.Retry(func() error {
-		resp, err = t.parent.RoundTrip(req)
+		resp, err = next.RoundTrip(req)
 		if t.cond(resp, err) {
 			return errors.New("retry")
 		}
