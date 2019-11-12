@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
@@ -129,6 +130,29 @@ func BenchmarkHx(b *testing.B) {
 			hx.WhenSuccess(hx.AsJSON(&msg)),
 			hx.WhenFailure(hx.AsJSONError(&Error{})),
 		)
+		if err != nil {
+			b.Errorf("returned %v, want nil", err)
+		}
+	}
+}
+
+func BenchmarkNetHTTP(b *testing.B) {
+	url, closeServer := setupServer()
+	defer closeServer()
+
+	for i := 0; i < b.N; i++ {
+		var msg Message
+		var reqBuf bytes.Buffer
+		err := json.NewEncoder(&reqBuf).Encode(&Message{UserID: i, Message: "It works!"})
+		if err != nil {
+			b.Errorf("returned %v, want nil", err)
+		}
+		resp, err := http.Post(url, "application/json", &reqBuf)
+		if err != nil {
+			b.Errorf("returned %v, want nil", err)
+		}
+		defer resp.Body.Close()
+		err = json.NewDecoder(resp.Body).Decode(&msg)
 		if err != nil {
 			b.Errorf("returned %v, want nil", err)
 		}
