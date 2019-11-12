@@ -11,7 +11,10 @@ import (
 type ResponseHandler func(*http.Response, error) (*http.Response, error)
 
 func HandleResponse(f func(*http.Response, error) (*http.Response, error)) Option {
-	return OptionFunc(func(c *Config) { c.ResponseHandlers = append(c.ResponseHandlers, f) })
+	return OptionFunc(func(c *Config) error {
+		c.ResponseHandlers = append(c.ResponseHandlers, f)
+		return nil
+	})
 }
 
 type ResponseError struct {
