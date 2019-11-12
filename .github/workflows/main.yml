@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         go-version: ['1.12.x', '1.13.x']
-        module: ['', 'pb']
+        module: ['', 'pb', 'retry']
       fail-fast: false
 
     steps:

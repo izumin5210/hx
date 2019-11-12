@@ -5,13 +5,21 @@ coverage:
         target: 85%
         paths:
           - '!pb/'
+          - '!retry/'
       pb:
         target: 75%
         flags: pb
+      retry:
+        target: 75%
+        flags: retry
     patch: off
 
 flags:
   pb:
     paths:
       - 'pb/'
+    joined: false
+  retry:
+    paths:
+      - 'retry/'
     joined: false
