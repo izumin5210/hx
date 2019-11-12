@@ -18,6 +18,7 @@ import (
 
 func setupServer() (string, func()) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
 		switch {
 		case r.Method == http.MethodPost && r.URL.Path == "/messages":
 			w.WriteHeader(http.StatusCreated)
@@ -74,7 +75,7 @@ func BenchmarkGentleman(b *testing.B) {
 		if err != nil {
 			b.Errorf("returned %v, want nil", err)
 		}
-		err = resp.JSON(&msg)
+		err = resp.JSON(&msg) // closes a response body
 		if err != nil {
 			b.Errorf("returned %v, want nil", err)
 		}
@@ -109,7 +110,7 @@ func BenchmarkGrequests(b *testing.B) {
 		if err != nil {
 			b.Errorf("returned %v, want nil", err)
 		}
-		err = resp.JSON(&msg)
+		err = resp.JSON(&msg) // closes a response body
 		if err != nil {
 			b.Errorf("returned %v, want nil", err)
 		}
