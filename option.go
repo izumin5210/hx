@@ -85,11 +85,11 @@ func URL(urlStr string) Option {
 
 // Query sets an url query parameter.
 func Query(k, v string) Option {
-	return newURLOption(func(_ context.Context, u *url.URL) error {
-		q := u.Query()
-		q.Set(k, v)
-		u.RawQuery = q.Encode()
-		return nil
+	return OptionFunc(func(c *Config) {
+		c.QueryOptions = append(c.QueryOptions, func(_ context.Context, q url.Values) error {
+			q.Set(k, v)
+			return nil
+		})
 	})
 }
 
