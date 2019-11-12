@@ -44,12 +44,10 @@ func (cfg *Config) DoRequest(ctx context.Context, meth string) (*http.Response, 
 		return nil, err
 	}
 
-	req, err := http.NewRequest(meth, url.String(), body)
+	req, err := newRequest(ctx, meth, url, body)
 	if err != nil {
 		return nil, err
 	}
-
-	req = req.WithContext(ctx)
 
 	for _, h := range cfg.RequestHandlers {
 		req, err = h(req)
