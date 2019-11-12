@@ -21,6 +21,9 @@ var (
 	DefaultOptions   = []Option{
 		UserAgent(DefaultUserAgent),
 	}
+
+	contentTypeJSON = Header("Content-Type", "application/json")
+	contentTypeForm = Header("Content-Type", "application/x-www-form-urlencoded")
 )
 
 type Option interface {
@@ -105,7 +108,7 @@ func Body(v interface{}) Option {
 	case url.Values:
 		return CombineOptions(
 			setBodyOption(strings.NewReader(v.Encode())),
-			Header("Content-Type", "application/x-www-form-urlencoded"),
+			contentTypeForm,
 		)
 	case json.Marshaler:
 		return CombineOptions(
@@ -116,7 +119,7 @@ func Body(v interface{}) Option {
 				}
 				return bytes.NewReader(data), nil
 			}),
-			Header("Content-Type", "application/json"),
+			contentTypeJSON,
 		)
 	case encoding.TextMarshaler:
 		return newBodyOption(func(context.Context) (io.Reader, error) {
@@ -159,7 +162,7 @@ func JSON(v interface{}) Option {
 	}()
 	return CombineOptions(
 		bodyOpt,
-		Header("Content-Type", "application/json"),
+		contentTypeJSON,
 	)
 }
 
