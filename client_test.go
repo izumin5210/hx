@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -378,7 +379,11 @@ func TestClient_With(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case r.Method == http.MethodGet && r.URL.Path == "/echo":
-			err := json.NewEncoder(w).Encode(map[string]string{"message": r.Header.Get("Message")})
+			cnt, _ := strconv.Atoi(r.URL.Query().Get("count"))
+			if cnt == 0 {
+				cnt = 1
+			}
+			err := json.NewEncoder(w).Encode(map[string]string{"message": strings.Repeat(r.Header.Get("Message"), cnt)})
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
@@ -412,6 +417,7 @@ func TestClient_With(t *testing.T) {
 	var resp2 Response
 	cli = cli.With(
 		hx.Header("Message", "bar"),
+		hx.Query("count", "3"),
 	)
 	err = cli.Get(context.Background(), ts.URL+"/echo",
 		hx.WhenSuccess(hx.AsJSON(&resp2)),
@@ -419,7 +425,7 @@ func TestClient_With(t *testing.T) {
 	if err != nil {
 		t.Errorf("returned %v, want nil", err)
 	}
-	if got, want := resp2.Message, "bar"; got != want {
+	if got, want := resp2.Message, "barbarbar"; got != want {
 		t.Errorf("returned %q, want %q", got, want)
 	}
 }

@@ -9,6 +9,7 @@ import (
 
 type Config struct {
 	URLOptions       []func(context.Context, *url.URL) error
+	QueryOptions     []func(context.Context, url.Values) error
 	BodyOption       func(context.Context) (io.Reader, error)
 	ClientOptions    []func(context.Context, *http.Client) error
 	RequestHandlers  []RequestHandler
@@ -76,6 +77,18 @@ func (cfg *Config) buildURL(ctx context.Context) (*url.URL, error) {
 		err := f(ctx, u)
 		if err != nil {
 			return nil, err
+		}
+	}
+	if n := len(cfg.QueryOptions); n > 0 {
+		q := make(url.Values, n)
+		for _, f := range cfg.QueryOptions {
+			err := f(ctx, q)
+			if err != nil {
+				return nil, err
+			}
+		}
+		if len(q) > 0 {
+			u.RawQuery = q.Encode()
 		}
 	}
 
