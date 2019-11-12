@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/dghubble/sling"
 	"github.com/go-resty/resty/v2"
 	"github.com/izumin5210/hx"
 	"github.com/levigross/grequests"
@@ -56,6 +57,22 @@ func BenchmarkResty(b *testing.B) {
 			SetResult(&msg).
 			SetError(&Error{}).
 			Post(url)
+		if err != nil {
+			b.Errorf("returned %v, want nil", err)
+		}
+	}
+}
+
+func BenchmarkSling(b *testing.B) {
+	url, closeServer := setupServer()
+	defer closeServer()
+
+	for i := 0; i < b.N; i++ {
+		var msg Message
+		client := sling.New()
+		_, err := client.Post(url).
+			BodyJSON(&Message{UserID: i, Message: "It works!"}).
+			ReceiveSuccess(&msg) // sling closes a response body automatically
 		if err != nil {
 			b.Errorf("returned %v, want nil", err)
 		}

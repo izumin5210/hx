@@ -5,6 +5,7 @@ go 1.13
 replace github.com/izumin5210/hx => ../
 
 require (
+	github.com/dghubble/sling v1.3.0
 	github.com/go-resty/resty/v2 v2.1.0
 	github.com/izumin5210/hx v0.2.0
 	github.com/levigross/grequests v0.0.0-20190908174114-253788527a1a
