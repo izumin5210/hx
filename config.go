@@ -33,6 +33,17 @@ func (cfg *Config) Apply(opts ...Option) error {
 }
 
 func (cfg *Config) DoRequest(ctx context.Context, meth string) (*http.Response, error) {
+	q, err := url.ParseQuery(cfg.URL.RawQuery)
+	if err != nil {
+		return nil, err
+	}
+	for k, values := range cfg.QueryParams {
+		for _, v := range values {
+			q.Add(k, v)
+		}
+	}
+	cfg.URL.RawQuery = q.Encode()
+
 	req, err := newRequest(ctx, meth, cfg.URL, cfg.Body)
 	if err != nil {
 		return nil, err

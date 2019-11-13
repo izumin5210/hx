@@ -70,7 +70,7 @@ func URL(urlStr string) Option {
 // Query sets an url query parameter.
 func Query(k, v string) Option {
 	return OptionFunc(func(c *Config) error {
-		c.QueryParams.Set(k, v)
+		c.QueryParams.Add(k, v)
 		return nil
 	})
 }
