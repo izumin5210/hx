@@ -16,6 +16,8 @@ type Config struct {
 	ResponseHandlers []ResponseHandler
 }
 
+var newRequest func(ctx context.Context, meth, url string, body io.Reader) (*http.Request, error)
+
 func NewConfig() (*Config, error) {
 	cfg := &Config{URL: new(url.URL), HTTPClient: new(http.Client), QueryParams: url.Values{}}
 	err := cfg.Apply(DefaultOptions...)
@@ -47,7 +49,7 @@ func (cfg *Config) DoRequest(ctx context.Context, meth string) (*http.Response, 
 	}
 	cfg.URL.RawQuery = q.Encode()
 
-	req, err := newRequest(ctx, meth, cfg.URL, cfg.Body)
+	req, err := newRequest(ctx, meth, cfg.URL.String(), cfg.Body)
 	if err != nil {
 		return nil, err
 	}
