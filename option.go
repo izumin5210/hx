@@ -87,20 +87,14 @@ func Body(v interface{}) Option {
 			c.Body = bytes.NewReader(v)
 		case url.Values:
 			c.Body = strings.NewReader(v.Encode())
-			err := contentTypeForm.ApplyOption(c)
-			if err != nil {
-				return err
-			}
+			_ = contentTypeForm.ApplyOption(c)
 		case json.Marshaler:
 			data, err := v.MarshalJSON()
 			if err != nil {
 				return err
 			}
 			c.Body = bytes.NewReader(data)
-			err = contentTypeJSON.ApplyOption(c)
-			if err != nil {
-				return err
-			}
+			_ = contentTypeJSON.ApplyOption(c)
 		case encoding.TextMarshaler:
 			data, err := v.MarshalText()
 			if err != nil {
@@ -138,7 +132,8 @@ func JSON(v interface{}) Option {
 			}
 			c.Body = &buf
 		}
-		return contentTypeJSON.ApplyOption(c)
+		_ = contentTypeJSON.ApplyOption(c)
+		return nil
 	})
 }
 
