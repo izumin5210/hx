@@ -8,48 +8,51 @@ import (
 )
 
 type Config struct {
-	URLOptions       []func(context.Context, *url.URL) error
-	QueryOptions     []func(context.Context, url.Values) error
-	BodyOption       func(context.Context) (io.Reader, error)
-	ClientOptions    []func(context.Context, *http.Client) error
+	URL              *url.URL
+	Body             io.Reader
+	HTTPClient       *http.Client
+	QueryParams      url.Values
 	RequestHandlers  []RequestHandler
 	ResponseHandlers []ResponseHandler
 }
 
-func NewConfig() *Config {
-	cfg := new(Config)
-	cfg.Apply(DefaultOptions...)
-	return cfg
+var newRequest func(ctx context.Context, meth, url string, body io.Reader) (*http.Request, error)
+
+func NewConfig() (*Config, error) {
+	cfg := &Config{URL: new(url.URL), HTTPClient: new(http.Client), QueryParams: url.Values{}}
+	err := cfg.Apply(DefaultOptions...)
+	if err != nil {
+		return nil, err
+	}
+	return cfg, nil
 }
 
-func (cfg *Config) Apply(opts ...Option) {
+func (cfg *Config) Apply(opts ...Option) error {
 	for _, f := range opts {
-		f.ApplyOption(cfg)
+		err := f.ApplyOption(cfg)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func (cfg *Config) DoRequest(ctx context.Context, meth string) (*http.Response, error) {
-	url, err := cfg.buildURL(ctx)
+	q, err := url.ParseQuery(cfg.URL.RawQuery)
 	if err != nil {
 		return nil, err
 	}
+	for k, values := range cfg.QueryParams {
+		for _, v := range values {
+			q.Add(k, v)
+		}
+	}
+	cfg.URL.RawQuery = q.Encode()
 
-	body, err := cfg.buildBody(ctx)
+	req, err := newRequest(ctx, meth, cfg.URL.String(), cfg.Body)
 	if err != nil {
 		return nil, err
 	}
-
-	cli, err := cfg.buildClient(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest(meth, url.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req = req.WithContext(ctx)
 
 	for _, h := range cfg.RequestHandlers {
 		req, err = h(req)
@@ -58,7 +61,7 @@ func (cfg *Config) DoRequest(ctx context.Context, meth string) (*http.Response, 
 		}
 	}
 
-	resp, err := cli.Do(req)
+	resp, err := cfg.HTTPClient.Do(req)
 
 	for _, h := range cfg.ResponseHandlers {
 		resp, err = h(resp, err)
@@ -68,54 +71,4 @@ func (cfg *Config) DoRequest(ctx context.Context, meth string) (*http.Response, 
 	}
 
 	return resp, err
-}
-
-func (cfg *Config) buildURL(ctx context.Context) (*url.URL, error) {
-	u := new(url.URL)
-
-	for _, f := range cfg.URLOptions {
-		err := f(ctx, u)
-		if err != nil {
-			return nil, err
-		}
-	}
-	if n := len(cfg.QueryOptions); n > 0 {
-		q := make(url.Values, n)
-		for _, f := range cfg.QueryOptions {
-			err := f(ctx, q)
-			if err != nil {
-				return nil, err
-			}
-		}
-		if len(q) > 0 {
-			u.RawQuery = q.Encode()
-		}
-	}
-
-	return u, nil
-}
-
-func (cfg *Config) buildBody(ctx context.Context) (io.Reader, error) {
-	f := cfg.BodyOption
-	if f == nil {
-		return nil, nil
-	}
-	body, err := cfg.BodyOption(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return body, nil
-}
-
-func (cfg *Config) buildClient(ctx context.Context) (*http.Client, error) {
-	c := new(http.Client)
-
-	for _, f := range cfg.ClientOptions {
-		err := f(ctx, c)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return c, nil
 }

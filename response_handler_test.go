@@ -96,7 +96,7 @@ func TestResponseHandlerCond(t *testing.T) {
 				err := hx.Get(ctx, ts.URL+"/ping",
 					hx.Timeout(10*time.Millisecond),
 					hx.Query("status", fmt.Sprint(st)),
-					hx.When(hx.IsTemporaryError(), func(r *http.Response, e error) (*http.Response, error) {
+					hx.When(hx.IsTemporaryError, func(r *http.Response, e error) (*http.Response, error) {
 						handled = true
 						return r, e
 					}),
@@ -113,7 +113,7 @@ func TestResponseHandlerCond(t *testing.T) {
 			var handled bool
 			err := hx.Get(ctx, fmt.Sprintf("http://localhost:%d/ping", freePort),
 				hx.Timeout(10*time.Millisecond),
-				hx.When(hx.IsTemporaryError(), func(r *http.Response, e error) (*http.Response, error) {
+				hx.When(hx.IsTemporaryError, func(r *http.Response, e error) (*http.Response, error) {
 					handled = true
 					return r, e
 				}),
@@ -128,7 +128,7 @@ func TestResponseHandlerCond(t *testing.T) {
 	})
 
 	t.Run("Any", func(t *testing.T) {
-		cond := hx.Any(hx.IsServerError(), hx.IsTemporaryError())
+		cond := hx.Any(hx.IsServerError, hx.IsTemporaryError)
 		t.Run(fmt.Sprint(500), func(t *testing.T) {
 			err := hx.Get(ctx, ts.URL+"/ping",
 				hx.Timeout(10*time.Millisecond),

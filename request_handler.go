@@ -7,7 +7,10 @@ import (
 type RequestHandler func(*http.Request) (*http.Request, error)
 
 func HandleRequest(f func(*http.Request) (*http.Request, error)) Option {
-	return OptionFunc(func(c *Config) { c.RequestHandlers = append(c.RequestHandlers, f) })
+	return OptionFunc(func(c *Config) error {
+		c.RequestHandlers = append(c.RequestHandlers, f)
+		return nil
+	})
 }
 
 // BasicAuth sets an username and a password for basic authentication.

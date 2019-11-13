@@ -2,7 +2,6 @@ package hx
 
 import (
 	"bytes"
-	"context"
 	"encoding"
 	"encoding/json"
 	"fmt"
@@ -21,168 +20,143 @@ var (
 	DefaultOptions   = []Option{
 		UserAgent(DefaultUserAgent),
 	}
+
+	contentTypeJSON = Header("Content-Type", "application/json")
+	contentTypeForm = Header("Content-Type", "application/x-www-form-urlencoded")
 )
 
 type Option interface {
-	ApplyOption(*Config)
+	ApplyOption(*Config) error
 }
 
-type OptionFunc func(*Config)
+type OptionFunc func(*Config) error
 
-func (f OptionFunc) ApplyOption(c *Config) { f(c) }
+func (f OptionFunc) ApplyOption(c *Config) error { return f(c) }
 
 func CombineOptions(opts ...Option) Option {
-	return OptionFunc(func(c *Config) {
+	return OptionFunc(func(c *Config) error {
 		for _, o := range opts {
-			o.ApplyOption(c)
+			err := o.ApplyOption(c)
+			if err != nil {
+				return err
+			}
 		}
-	})
-}
-
-func newURLOption(f func(context.Context, *url.URL) error) Option {
-	return OptionFunc(func(c *Config) {
-		c.URLOptions = append(c.URLOptions, f)
-	})
-}
-
-func newBodyOption(f func(context.Context) (io.Reader, error)) Option {
-	return OptionFunc(func(c *Config) {
-		c.BodyOption = f
-	})
-}
-
-func setBodyOption(r io.Reader) Option {
-	return newBodyOption(func(context.Context) (io.Reader, error) { return r, nil })
-}
-
-func newClientOption(f func(context.Context, *http.Client) error) Option {
-	return OptionFunc(func(c *Config) {
-		c.ClientOptions = append(c.ClientOptions, f)
+		return nil
 	})
 }
 
 func BaseURL(baseURL *url.URL) Option {
-	return newURLOption(func(_ context.Context, dest *url.URL) error {
-		*dest = *baseURL
+	return OptionFunc(func(c *Config) error {
+		c.URL = baseURL
 		return nil
 	})
 }
 
 func URL(urlStr string) Option {
-	return newURLOption(func(_ context.Context, base *url.URL) error {
+	return OptionFunc(func(c *Config) error {
 		parse := url.Parse
-		if base != nil {
-			parse = base.Parse
+		if u := c.URL; u != nil {
+			parse = u.Parse
 		}
 		newURL, err := parse(urlStr)
 		if err != nil {
 			return err
 		}
-		*base = *newURL
+		c.URL = newURL
 		return nil
 	})
 }
 
 // Query sets an url query parameter.
 func Query(k, v string) Option {
-	return OptionFunc(func(c *Config) {
-		c.QueryOptions = append(c.QueryOptions, func(_ context.Context, q url.Values) error {
-			q.Set(k, v)
-			return nil
-		})
+	return OptionFunc(func(c *Config) error {
+		c.QueryParams.Add(k, v)
+		return nil
 	})
 }
 
 // Body sets data to request body.
 func Body(v interface{}) Option {
-	switch v := v.(type) {
-	case io.Reader:
-		return setBodyOption(v)
-	case string:
-		return setBodyOption(strings.NewReader(v))
-	case []byte:
-		return setBodyOption(bytes.NewReader(v))
-	case url.Values:
-		return CombineOptions(
-			setBodyOption(strings.NewReader(v.Encode())),
-			Header("Content-Type", "application/x-www-form-urlencoded"),
-		)
-	case json.Marshaler:
-		return CombineOptions(
-			newBodyOption(func(context.Context) (io.Reader, error) {
-				data, err := v.MarshalJSON()
-				if err != nil {
-					return nil, err
-				}
-				return bytes.NewReader(data), nil
-			}),
-			Header("Content-Type", "application/json"),
-		)
-	case encoding.TextMarshaler:
-		return newBodyOption(func(context.Context) (io.Reader, error) {
+	return OptionFunc(func(c *Config) error {
+		switch v := v.(type) {
+		case io.Reader:
+			c.Body = v
+		case string:
+			c.Body = strings.NewReader(v)
+		case []byte:
+			c.Body = bytes.NewReader(v)
+		case url.Values:
+			c.Body = strings.NewReader(v.Encode())
+			_ = contentTypeForm.ApplyOption(c)
+		case json.Marshaler:
+			data, err := v.MarshalJSON()
+			if err != nil {
+				return err
+			}
+			c.Body = bytes.NewReader(data)
+			_ = contentTypeJSON.ApplyOption(c)
+		case encoding.TextMarshaler:
 			data, err := v.MarshalText()
 			if err != nil {
-				return nil, err
+				return err
 			}
-			return bytes.NewReader(data), nil
-		})
-	case fmt.Stringer:
-		return setBodyOption(strings.NewReader(v.String()))
-	default:
-		return newBodyOption(func(context.Context) (io.Reader, error) {
+			c.Body = bytes.NewReader(data)
+		case fmt.Stringer:
+			c.Body = strings.NewReader(v.String())
+		default:
 			var buf bytes.Buffer
 			err := json.NewEncoder(&buf).Encode(v)
 			if err != nil {
-				return nil, err
+				return err
 			}
-			return &buf, nil
-		})
-	}
+			c.Body = &buf
+		}
+		return nil
+	})
 }
 
 // JSON sets data to request body as json.
 func JSON(v interface{}) Option {
-	bodyOpt := func() Option {
+	return OptionFunc(func(c *Config) error {
 		switch v := v.(type) {
 		case io.Reader, string, []byte:
-			return Body(v)
+			err := Body(v).ApplyOption(c)
+			if err != nil {
+				return err
+			}
 		default:
-			return newBodyOption(func(context.Context) (io.Reader, error) {
-				var buf bytes.Buffer
-				err := json.NewEncoder(&buf).Encode(v)
-				if err != nil {
-					return nil, err
-				}
-				return &buf, nil
-			})
+			var buf bytes.Buffer
+			err := json.NewEncoder(&buf).Encode(v)
+			if err != nil {
+				return err
+			}
+			c.Body = &buf
 		}
-	}()
-	return CombineOptions(
-		bodyOpt,
-		Header("Content-Type", "application/json"),
-	)
+		_ = contentTypeJSON.ApplyOption(c)
+		return nil
+	})
 }
 
 // HTTPClient sets a HTTP client that used to send HTTP request(s).
-func HTTPClient(c *http.Client) Option {
-	return newClientOption(func(_ context.Context, old *http.Client) error {
-		*old = *c
+func HTTPClient(cli *http.Client) Option {
+	return OptionFunc(func(c *Config) error {
+		c.HTTPClient = cli
 		return nil
 	})
 }
 
 // Transport sets the round tripper to http.Client.
 func Transport(rt http.RoundTripper) Option {
-	return newClientOption(func(_ context.Context, c *http.Client) error {
-		c.Transport = rt
+	return OptionFunc(func(c *Config) error {
+		c.HTTPClient.Transport = rt
 		return nil
 	})
 }
 
 // TransportFrom sets the round tripper to http.Client.
 func TransportFrom(f func(http.RoundTripper) http.RoundTripper) Option {
-	return newClientOption(func(_ context.Context, c *http.Client) error {
-		c.Transport = f(c.Transport)
+	return OptionFunc(func(c *Config) error {
+		c.HTTPClient.Transport = f(c.HTTPClient.Transport)
 		return nil
 	})
 }
@@ -193,8 +167,8 @@ func TransportFunc(f func(*http.Request, http.RoundTripper) (*http.Response, err
 
 // Timeout sets the max duration for http request(s).
 func Timeout(t time.Duration) Option {
-	return newClientOption(func(_ context.Context, c *http.Client) error {
-		c.Timeout = t
+	return OptionFunc(func(c *Config) error {
+		c.HTTPClient.Timeout = t
 		return nil
 	})
 }

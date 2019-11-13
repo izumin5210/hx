@@ -11,7 +11,10 @@ import (
 type ResponseHandler func(*http.Response, error) (*http.Response, error)
 
 func HandleResponse(f func(*http.Response, error) (*http.Response, error)) Option {
-	return OptionFunc(func(c *Config) { c.ResponseHandlers = append(c.ResponseHandlers, f) })
+	return OptionFunc(func(c *Config) error {
+		c.ResponseHandlers = append(c.ResponseHandlers, f)
+		return nil
+	})
 }
 
 type ResponseError struct {
@@ -119,16 +122,17 @@ func Not(cond ResponseHandlerCond) ResponseHandlerCond {
 	return func(r *http.Response, err error) bool { return !cond(r, err) }
 }
 
-func IsSuccess() ResponseHandlerCond     { return checkStatus(func(c int) bool { return c/100 == 2 }) }
-func IsFailure() ResponseHandlerCond     { return Not(IsSuccess()) }
-func IsClientError() ResponseHandlerCond { return checkStatus(func(c int) bool { return c/100 == 4 }) }
-func IsServerError() ResponseHandlerCond { return checkStatus(func(c int) bool { return c/100 == 5 }) }
-func IsTemporaryError() ResponseHandlerCond {
-	return func(r *http.Response, err error) bool {
+var (
+	IsSuccess        ResponseHandlerCond = checkStatus(func(c int) bool { return c/100 == 2 })
+	IsFailure        ResponseHandlerCond = Not(IsSuccess)
+	IsClientError    ResponseHandlerCond = checkStatus(func(c int) bool { return c/100 == 4 })
+	IsServerError    ResponseHandlerCond = checkStatus(func(c int) bool { return c/100 == 5 })
+	IsTemporaryError ResponseHandlerCond = func(r *http.Response, err error) bool {
 		terr, ok := err.(interface{ Temporary() bool })
 		return ok && terr.Temporary()
 	}
-}
+)
+
 func IsStatus(codes ...int) ResponseHandlerCond {
 	m := make(map[int]struct{}, len(codes))
 	for _, c := range codes {
@@ -146,8 +150,8 @@ func When(cond ResponseHandlerCond, rh ResponseHandler) Option {
 	})
 }
 
-func WhenSuccess(h ResponseHandler) Option              { return When(IsSuccess(), h) }
-func WhenFailure(h ResponseHandler) Option              { return When(IsFailure(), h) }
-func WhenClientError(h ResponseHandler) Option          { return When(IsClientError(), h) }
-func WhenServerError(h ResponseHandler) Option          { return When(IsServerError(), h) }
+func WhenSuccess(h ResponseHandler) Option              { return When(IsSuccess, h) }
+func WhenFailure(h ResponseHandler) Option              { return When(IsFailure, h) }
+func WhenClientError(h ResponseHandler) Option          { return When(IsClientError, h) }
+func WhenServerError(h ResponseHandler) Option          { return When(IsServerError, h) }
 func WhenStatus(h ResponseHandler, codes ...int) Option { return When(IsStatus(codes...), h) }
