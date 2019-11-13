@@ -67,9 +67,10 @@ func (c *Client) With(opts ...Option) *Client {
 }
 
 func (c *Client) request(ctx context.Context, meth string, url string, opts ...Option) error {
-	var err error
-
-	cfg := NewConfig()
+	cfg, err := NewConfig()
+	if err != nil {
+		return err
+	}
 	err = cfg.Apply(c.opts...)
 	if err != nil {
 		return err

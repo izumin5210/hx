@@ -16,10 +16,13 @@ type Config struct {
 	ResponseHandlers []ResponseHandler
 }
 
-func NewConfig() *Config {
+func NewConfig() (*Config, error) {
 	cfg := &Config{URL: new(url.URL), HTTPClient: new(http.Client), QueryParams: url.Values{}}
-	cfg.Apply(DefaultOptions...)
-	return cfg
+	err := cfg.Apply(DefaultOptions...)
+	if err != nil {
+		return nil, err
+	}
+	return cfg, nil
 }
 
 func (cfg *Config) Apply(opts ...Option) error {
