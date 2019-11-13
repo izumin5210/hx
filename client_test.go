@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -232,7 +232,6 @@ func TestClient(t *testing.T) {
 			} else if reqErr, ok := err.(*hx.ResponseError); !ok {
 				t.Errorf("returned %v, want *hx.ResponseError", err)
 			} else if rawErr := reqErr.Err; rawErr == nil {
-				fmt.Println(reqErr)
 				t.Error("returned error wrapped no errors")
 			} else if fakeErr, ok := rawErr.(*fakeError); !ok {
 				t.Errorf("wrapped error is unknown: %v", rawErr)
@@ -428,4 +427,57 @@ func TestClient_With(t *testing.T) {
 	if got, want := resp2.Message, "barbarbar"; got != want {
 		t.Errorf("returned %q, want %q", got, want)
 	}
+}
+
+func TestClient_DefaultOptions(t *testing.T) {
+	type Post struct {
+		Message string `json:"message"`
+	}
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/ping":
+			msg := "pong"
+			if got := r.URL.Query().Get("message"); got != "" {
+				msg = got
+			}
+			json.NewEncoder(w).Encode(&Post{Message: msg})
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer ts.Close()
+
+	var replaceDefaultOption = func(opts ...hx.Option) func() {
+		tmp := hx.DefaultOptions
+		hx.DefaultOptions = opts
+		return func() { hx.DefaultOptions = tmp }
+	}
+	optErr := hx.OptionFunc(func(c *hx.Config) error {
+		return errors.New("error occurred")
+	})
+
+	t.Run("valid", func(t *testing.T) {
+		defer replaceDefaultOption(hx.Query("message", "foobar"))()
+
+		var out Post
+		err := hx.Get(context.Background(), ts.URL+"/ping",
+			hx.WhenSuccess(hx.AsJSON(&out)),
+			hx.WhenFailure(hx.AsError()),
+		)
+		if err != nil {
+			t.Errorf("returned %v, want nil", err)
+		}
+		if got, want := out.Message, "foobar"; got != want {
+			t.Errorf("returned %q, want %q", got, want)
+		}
+	})
+
+	t.Run("invalid", func(t *testing.T) {
+		defer replaceDefaultOption(optErr)()
+
+		err := hx.Get(context.Background(), ts.URL+"/ping")
+		if err == nil {
+			t.Error("returned nil, want an error")
+		}
+	})
 }
