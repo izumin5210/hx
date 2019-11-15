@@ -116,26 +116,7 @@ func Body(v interface{}) Option {
 }
 
 // JSON sets data to request body as json.
-func JSON(v interface{}) Option {
-	return OptionFunc(func(c *Config) error {
-		switch v := v.(type) {
-		case io.Reader, string, []byte:
-			err := Body(v).ApplyOption(c)
-			if err != nil {
-				return err
-			}
-		default:
-			var buf bytes.Buffer
-			err := json.NewEncoder(&buf).Encode(v)
-			if err != nil {
-				return err
-			}
-			c.Body = &buf
-		}
-		_ = contentTypeJSON.ApplyOption(c)
-		return nil
-	})
-}
+func JSON(v interface{}) Option { return DefaultJSONConfig.JSON(v) }
 
 // HTTPClient sets a HTTP client that used to send HTTP request(s).
 func HTTPClient(cli *http.Client) Option {
