@@ -20,6 +20,11 @@ func TestJSON(t *testing.T) {
 		defer r.Body.Close()
 		switch {
 		case r.Method == http.MethodPost && r.URL.Path == "/echo":
+			if r.Header.Get("Content-Type") != "application/json" {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
 			var (
 				msg proto3_proto.Message
 				buf bytes.Buffer
