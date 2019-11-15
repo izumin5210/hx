@@ -10,7 +10,11 @@ import (
 	"github.com/izumin5210/hx"
 )
 
-var DefaultJSONConfig = &JSONConfig{}
+var (
+	DefaultJSONConfig = &JSONConfig{}
+
+	contentTypeJSON = hx.Header("Content-Type", "application/json")
+)
 
 // JSON sets proto.Message to request body as json.
 // This will marshal a given data with jsonpb.Marshaler in default.
@@ -38,7 +42,7 @@ func (c *JSONConfig) JSON(pb proto.Message) hx.Option {
 			return err
 		}
 		hc.Body = r
-		return nil
+		return contentTypeJSON.ApplyOption(hc)
 	})
 }
 
