@@ -60,7 +60,7 @@ func TestRetry(t *testing.T) {
 	var out Message
 
 	err := hx.Post(context.Background(), ts.URL+"/messages",
-		retry.When(hx.Any(hx.IsServerError(), hx.IsTemporaryError()), bo),
+		retry.When(hx.Any(hx.IsServerError, hx.IsTemporaryError), bo),
 		hx.JSON(&in),
 		hx.WhenSuccess(hx.AsJSON(&out)),
 		hx.WhenFailure(hx.AsError()),

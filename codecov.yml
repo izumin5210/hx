@@ -7,10 +7,10 @@ coverage:
           - '!pb/'
           - '!retry/'
       pb:
-        target: 75%
+        target: 70%
         flags: pb
       retry:
-        target: 75%
+        target: 70%
         flags: retry
     patch: off
 

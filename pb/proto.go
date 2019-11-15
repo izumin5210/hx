@@ -2,7 +2,6 @@ package pb
 
 import (
 	"bytes"
-	"context"
 	"io"
 	"net/http"
 
@@ -30,10 +29,13 @@ type ProtoConfig struct {
 }
 
 func (c *ProtoConfig) Proto(pb proto.Message) hx.Option {
-	return hx.OptionFunc(func(hc *hx.Config) {
-		hc.BodyOption = func(context.Context) (io.Reader, error) {
-			return c.encode(pb)
+	return hx.OptionFunc(func(hc *hx.Config) error {
+		r, err := c.encode(pb)
+		if err != nil {
+			return err
 		}
+		hc.Body = r
+		return nil
 	})
 }
 
