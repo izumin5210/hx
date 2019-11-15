@@ -21,7 +21,7 @@ func TestClient(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case r.Method == http.MethodGet && r.URL.Path == "/ping":
-			r.Write(bytes.NewBufferString("pong"))
+			w.Write([]byte("pong"))
 		case r.URL.Path == "/method":
 			if want, got := r.URL.Query().Get("method"), r.Method; got != want {
 				w.WriteHeader(http.StatusBadRequest)
@@ -178,6 +178,19 @@ func TestClient(t *testing.T) {
 			t.Errorf("returned %v, want nil", err)
 		}
 		if got, want := out.Message, "It, Works!"; got != want {
+			t.Errorf("returned %q, want %q", got, want)
+		}
+	})
+
+	t.Run("receive bytes", func(t *testing.T) {
+		var out bytes.Buffer
+		err := hx.Get(context.Background(), ts.URL+"/ping",
+			hx.WhenSuccess(hx.AsBytesBuffer(&out)),
+		)
+		if err != nil {
+			t.Errorf("returned %v, want nil", err)
+		}
+		if got, want := out.String(), "pong"; got != want {
 			t.Errorf("returned %q, want %q", got, want)
 		}
 	})
