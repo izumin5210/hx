@@ -1,6 +1,7 @@
 package hx
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -44,6 +45,20 @@ func AsJSON(dst interface{}) ResponseHandler {
 		}
 		defer r.Body.Close()
 		err = json.NewDecoder(r.Body).Decode(dst)
+		if err != nil {
+			return nil, &ResponseError{Response: r, Err: err}
+		}
+		return r, nil
+	}
+}
+
+func AsBytesBuffer(dst *bytes.Buffer) ResponseHandler {
+	return func(r *http.Response, err error) (*http.Response, error) {
+		if r == nil || err != nil {
+			return r, err
+		}
+		defer r.Body.Close()
+		_, err = dst.ReadFrom(r.Body)
 		if err != nil {
 			return nil, &ResponseError{Response: r, Err: err}
 		}
