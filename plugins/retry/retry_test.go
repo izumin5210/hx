@@ -11,7 +11,7 @@ import (
 
 	"github.com/cenkalti/backoff/v3"
 	"github.com/izumin5210/hx"
-	"github.com/izumin5210/hx/retry"
+	"github.com/izumin5210/hx/plugins/retry"
 )
 
 func TestRetry(t *testing.T) {

@@ -1,25 +1,27 @@
 coverage:
   status:
     project:
-      default:
+      default: off
+      core:
         target: 85%
-        paths:
-          - '!pb/'
-          - '!retry/'
-      pb:
+        flags: core
+      plugins.pb:
         target: 70%
-        flags: pb
-      retry:
+        flags: plugins.pb
+      plugins.retry:
         target: 70%
-        flags: retry
+        flags: plugins.retry
     patch: off
 
 flags:
-  pb:
+  core:
     paths:
-      - 'pb/'
+      - '!plugins/'
+  plugins.pb:
+    paths:
+      - 'plugins/pb/'
     joined: false
-  retry:
+  plugins.retry:
     paths:
-      - 'retry/'
+      - 'plugins/retry/'
     joined: false

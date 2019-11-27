@@ -1,4 +1,4 @@
-module github.com/izumin5210/hx/pb
+module github.com/izumin5210/hx/plugins/pb
 
 go 1.13
 

@@ -1,4 +1,4 @@
-module github.com/izumin5210/hx/retry
+module github.com/izumin5210/hx/plugins/retry
 
 go 1.13
 
