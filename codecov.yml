@@ -4,8 +4,7 @@ coverage:
       default:
         target: 85%
         paths:
-          - '!pb/'
-          - '!retry/'
+          - '!plugins/'
       pb:
         target: 70%
         flags: pb
@@ -17,9 +16,9 @@ coverage:
 flags:
   pb:
     paths:
-      - 'pb/'
+      - 'plugins/pb/'
     joined: false
   retry:
     paths:
-      - 'retry/'
+      - 'plugins/retry/'
     joined: false
