@@ -24,9 +24,10 @@ jobs:
 
     - run: go test -v -race -coverprofile coverage.txt -covermode atomic ./...
 
-    - uses: codecov/codecov-action@v1.0.3
+    - uses: codecov/codecov-action@v1.0.4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
+        flags: core
 
   test-plugins:
     runs-on: ubuntu-latest
@@ -48,8 +49,8 @@ jobs:
     - run: go test -v -race -coverprofile coverage.txt -covermode atomic ./...
       working-directory: ./plugins/${{ matrix.module }}
 
-    - uses: codecov/codecov-action@v1.0.3
+    - uses: codecov/codecov-action@v1.0.4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        flags: ${{ matrix.module }}
+        flags: plugins.${{ matrix.module }}
         file: ./plugins/${{ matrix.module }}/coverage.txt
