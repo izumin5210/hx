@@ -12,7 +12,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/proto/proto3_proto"
 	"github.com/izumin5210/hx"
-	"github.com/izumin5210/hx/pb"
+	"github.com/izumin5210/hx/plugins/pb"
 )
 
 func TestJSON(t *testing.T) {
