@@ -13,8 +13,10 @@ Developer-friendly, Production-ready and extensible HTTP client for Go
 
 ### Plugins
 
-- [retry](./retry)
-- [pb](./pb) - Marshaling and Unmarshaling protocol buffers
+- [hxlog](./plugins/hxlog) - Logging requests and responses with standard logger
+- [hxlog](./plugins/hxzap) - Logging requests and responses with [zap](https://github.com/uber-go/zap)
+- [pb](./plugins/pb) - Marshaling and Unmarshaling protocol buffers
+- [retry](./plugins/retry) - Retrying HTTP requests
 
 ## Examples
 ### Simple GET
