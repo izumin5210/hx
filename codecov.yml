@@ -5,6 +5,12 @@ coverage:
       core:
         target: 85%
         flags: core
+      plugins.hxlog:
+        target: 70%
+        flags: plugins.hxlog
+      plugins.hxzap:
+        target: 70%
+        flags: plugins.hxzap
       plugins.pb:
         target: 70%
         flags: plugins.pb
@@ -17,6 +23,14 @@ flags:
   core:
     paths:
       - '!plugins/'
+  plugins.hxlog:
+    paths:
+      - 'plugins/hxlog/'
+    joined: false
+  plugins.hxzap:
+    paths:
+      - 'plugins/hxzap/'
+    joined: false
   plugins.pb:
     paths:
       - 'plugins/pb/'
