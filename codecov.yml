@@ -7,35 +7,35 @@ coverage:
         flags: core
       plugins.hxlog:
         target: 70%
-        flags: plugins.hxlog
+        flags: hxlog
       plugins.hxzap:
         target: 70%
-        flags: plugins.hxzap
+        flags: hxzap
       plugins.pb:
         target: 70%
-        flags: plugins.pb
+        flags: pb
       plugins.retry:
         target: 70%
-        flags: plugins.retry
+        flags: retry
     patch: off
 
 flags:
   core:
     paths:
       - '!plugins/'
-  plugins.hxlog:
+  hxlog:
     paths:
       - 'plugins/hxlog/'
     joined: false
-  plugins.hxzap:
+  hxzap:
     paths:
       - 'plugins/hxzap/'
     joined: false
-  plugins.pb:
+  pb:
     paths:
       - 'plugins/pb/'
     joined: false
-  plugins.retry:
+  retry:
     paths:
       - 'plugins/retry/'
     joined: false

@@ -52,5 +52,5 @@ jobs:
     - uses: codecov/codecov-action@v1.0.4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        flags: plugins.${{ matrix.module }}
+        flags: ${{ matrix.module }}
         file: ./plugins/${{ matrix.module }}/coverage.txt
