@@ -35,7 +35,7 @@ jobs:
     strategy:
       matrix:
         go-version: ['1.13.x']
-        module: ['pb', 'retry']
+        module: ['pb', 'retry', 'hxlog', 'hxzap']
       fail-fast: false
 
     steps:
@@ -52,5 +52,5 @@ jobs:
     - uses: codecov/codecov-action@v1.0.4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        flags: plugins.${{ matrix.module }}
+        flags: ${{ matrix.module }}
         file: ./plugins/${{ matrix.module }}/coverage.txt
