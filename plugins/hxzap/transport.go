@@ -1,4 +1,4 @@
-package zap
+package hxzap
 
 import (
 	"net/http"

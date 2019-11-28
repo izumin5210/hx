@@ -1,4 +1,4 @@
-package zap_test
+package hxzap_test
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/izumin5210/hx"
-	hxzap "github.com/izumin5210/hx/logging/zap"
+	"github.com/izumin5210/hx/plugins/hxzap"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest/observer"

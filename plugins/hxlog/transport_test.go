@@ -1,4 +1,4 @@
-package logging_test
+package hxlog_test
 
 import (
 	"bytes"
@@ -11,15 +11,15 @@ import (
 	"time"
 
 	"github.com/izumin5210/hx"
-	"github.com/izumin5210/hx/logging"
+	"github.com/izumin5210/hx/plugins/hxlog"
 )
 
 func TestWith(t *testing.T) {
 	loc := time.FixedZone("Asia/Tokyo", 9*60*60)
 	now := time.Date(2019, time.November, 24, 24, 32, 48, 0, loc)
-	defer logging.SetNow(func() time.Time { return now })()
+	defer hxlog.SetNow(func() time.Time { return now })()
 	respTime := 32 * time.Millisecond
-	defer logging.SetSince(func(time.Time) time.Duration { return respTime })()
+	defer hxlog.SetSince(func(time.Time) time.Duration { return respTime })()
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
@@ -38,7 +38,7 @@ func TestWith(t *testing.T) {
 		log := log.New(&buf, "", 0)
 
 		err := hx.Get(context.Background(), ts.URL+"/ping",
-			hx.TransportFunc(logging.With(log)),
+			hx.TransportFunc(hxlog.With(log)),
 			hx.WhenFailure(hx.AsError()),
 		)
 
@@ -58,7 +58,7 @@ func TestWith(t *testing.T) {
 		log := log.New(&buf, "", 0)
 
 		err := hx.Get(context.Background(), ts.URL+"/foobar",
-			hx.TransportFunc(logging.With(log)),
+			hx.TransportFunc(hxlog.With(log)),
 			hx.WhenFailure(hx.AsError()),
 		)
 
@@ -78,7 +78,7 @@ func TestWith(t *testing.T) {
 		log := log.New(&buf, "", 0)
 
 		err := hx.Get(context.Background(), ts.URL+"/sleep",
-			hx.TransportFunc(logging.With(log)),
+			hx.TransportFunc(hxlog.With(log)),
 			hx.WhenFailure(hx.AsError()),
 			hx.Timeout(10*time.Millisecond),
 		)

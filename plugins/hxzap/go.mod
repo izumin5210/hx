@@ -1,4 +1,4 @@
-module github.com/izumin5210/hx/logging/zap
+module github.com/izumin5210/hx/plugins/hxzap
 
 go 1.13
 

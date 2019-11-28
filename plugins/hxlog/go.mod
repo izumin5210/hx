@@ -1,4 +1,4 @@
-module github.com/izumin5210/hx/logging
+module github.com/izumin5210/hx/plugins/hxlog
 
 go 1.13
 
