@@ -61,22 +61,20 @@ func (cfg *Config) DoRequest(ctx context.Context, meth string) (*http.Response, 
 	return f(cfg.HTTPClient, req)
 }
 
-func (cfg *Config) doRequest(cli *http.Client, req *http.Request) (*http.Response, error) {
-	var err error
+func (cfg *Config) doRequest(cli *http.Client, req *http.Request) (resp *http.Response, err error) {
 	for _, h := range cfg.RequestHandlers {
 		req, err = h(req)
 		if err != nil {
-			return nil, err
+			break
 		}
 	}
 
-	resp, err := cli.Do(req)
+	if err == nil {
+		resp, err = cli.Do(req)
+	}
 
 	for _, h := range cfg.ResponseHandlers {
 		resp, err = h(resp, err)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return resp, err
