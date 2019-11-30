@@ -11,7 +11,7 @@ import (
 
 	"github.com/cenkalti/backoff/v3"
 	"github.com/izumin5210/hx"
-	"github.com/izumin5210/hx/retry"
+	"github.com/izumin5210/hx/plugins/retry"
 )
 
 func TestRetry(t *testing.T) {
@@ -60,7 +60,7 @@ func TestRetry(t *testing.T) {
 	var out Message
 
 	err := hx.Post(context.Background(), ts.URL+"/messages",
-		retry.When(hx.Any(hx.IsServerError(), hx.IsTemporaryError()), bo),
+		retry.When(hx.Any(hx.IsServerError, hx.IsTemporaryError), bo),
 		hx.JSON(&in),
 		hx.WhenSuccess(hx.AsJSON(&out)),
 		hx.WhenFailure(hx.AsError()),

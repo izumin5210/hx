@@ -1,25 +1,41 @@
 coverage:
   status:
     project:
-      default:
+      default: off
+      core:
         target: 85%
-        paths:
-          - '!pb/'
-          - '!retry/'
-      pb:
-        target: 75%
+        flags: core
+      plugins.hxlog:
+        target: 70%
+        flags: hxlog
+      plugins.hxzap:
+        target: 70%
+        flags: hxzap
+      plugins.pb:
+        target: 70%
         flags: pb
-      retry:
-        target: 75%
+      plugins.retry:
+        target: 70%
         flags: retry
     patch: off
 
 flags:
+  core:
+    paths:
+      - '!plugins/'
+  hxlog:
+    paths:
+      - 'plugins/hxlog/'
+    joined: false
+  hxzap:
+    paths:
+      - 'plugins/hxzap/'
+    joined: false
   pb:
     paths:
-      - 'pb/'
+      - 'plugins/pb/'
     joined: false
   retry:
     paths:
-      - 'retry/'
+      - 'plugins/retry/'
     joined: false
