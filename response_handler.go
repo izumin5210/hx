@@ -2,7 +2,6 @@ package hx
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -38,19 +37,7 @@ func (e *ResponseError) Unwrap() error {
 	return e
 }
 
-func AsJSON(dst interface{}) ResponseHandler {
-	return func(r *http.Response, err error) (*http.Response, error) {
-		if r == nil || err != nil {
-			return r, err
-		}
-		defer r.Body.Close()
-		err = json.NewDecoder(r.Body).Decode(dst)
-		if err != nil {
-			return nil, &ResponseError{Response: r, Err: err}
-		}
-		return r, nil
-	}
-}
+func AsJSON(dst interface{}) ResponseHandler { return DefaultJSONConfig.AsJSON(dst) }
 
 func AsBytesBuffer(dst *bytes.Buffer) ResponseHandler {
 	return func(r *http.Response, err error) (*http.Response, error) {
@@ -101,18 +88,7 @@ func AsError() ResponseHandler {
 //  		// handle unknown error
 //  	}
 //  }
-func AsJSONError(dst error) ResponseHandler {
-	return func(r *http.Response, err error) (*http.Response, error) {
-		if r == nil || err != nil {
-			return r, err
-		}
-		r, err = AsJSON(dst)(r, err)
-		if err != nil {
-			return nil, &ResponseError{Response: r, Err: err}
-		}
-		return nil, &ResponseError{Response: r, Err: dst}
-	}
-}
+func AsJSONError(dst error) ResponseHandler { return DefaultJSONConfig.AsJSONError(dst) }
 
 func checkStatus(f func(int) bool) func(*http.Response, error) bool {
 	return func(r *http.Response, err error) bool {
