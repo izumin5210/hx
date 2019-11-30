@@ -14,6 +14,7 @@ type Config struct {
 	QueryParams      url.Values
 	RequestHandlers  []RequestHandler
 	ResponseHandlers []ResponseHandler
+	Interceptors     []Interceptor
 }
 
 var newRequest func(ctx context.Context, meth, url string, body io.Reader) (*http.Request, error)
@@ -54,6 +55,12 @@ func (cfg *Config) DoRequest(ctx context.Context, meth string) (*http.Response, 
 		return nil, err
 	}
 
+	f := combineInterceptors(cfg.Interceptors).Wrap(cfg.doRequest)
+	return f(cfg.HTTPClient, req)
+}
+
+func (cfg *Config) doRequest(cli *http.Client, req *http.Request) (*http.Response, error) {
+	var err error
 	for _, h := range cfg.RequestHandlers {
 		req, err = h(req)
 		if err != nil {
@@ -61,7 +68,7 @@ func (cfg *Config) DoRequest(ctx context.Context, meth string) (*http.Response, 
 		}
 	}
 
-	resp, err := cfg.HTTPClient.Do(req)
+	resp, err := cli.Do(req)
 
 	for _, h := range cfg.ResponseHandlers {
 		resp, err = h(resp, err)
