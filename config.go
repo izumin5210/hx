@@ -39,16 +39,18 @@ func (cfg *Config) Apply(opts ...Option) error {
 }
 
 func (cfg *Config) DoRequest(ctx context.Context, meth string) (*http.Response, error) {
-	q, err := url.ParseQuery(cfg.URL.RawQuery)
-	if err != nil {
-		return nil, err
-	}
-	for k, values := range cfg.QueryParams {
-		for _, v := range values {
-			q.Add(k, v)
+	if len(cfg.QueryParams) > 0 {
+		q, err := url.ParseQuery(cfg.URL.RawQuery)
+		if err != nil {
+			return nil, err
 		}
+		for k, values := range cfg.QueryParams {
+			for _, v := range values {
+				q.Add(k, v)
+			}
+		}
+		cfg.URL.RawQuery = q.Encode()
 	}
-	cfg.URL.RawQuery = q.Encode()
 
 	req, err := newRequest(ctx, meth, cfg.URL.String(), cfg.Body)
 	if err != nil {
@@ -59,8 +61,7 @@ func (cfg *Config) DoRequest(ctx context.Context, meth string) (*http.Response, 
 	return f(cfg.HTTPClient, req)
 }
 
-func (cfg *Config) doRequest(cli *http.Client, req *http.Request) (*http.Response, error) {
-	var err error
+func (cfg *Config) doRequest(cli *http.Client, req *http.Request) (resp *http.Response, err error) {
 	for _, h := range cfg.RequestHandlers {
 		req, err = h(req)
 		if err != nil {
@@ -68,13 +69,10 @@ func (cfg *Config) doRequest(cli *http.Client, req *http.Request) (*http.Respons
 		}
 	}
 
-	resp, err := cli.Do(req)
+	resp, err = cli.Do(req)
 
 	for _, h := range cfg.ResponseHandlers {
 		resp, err = h(resp, err)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return resp, err
