@@ -65,13 +65,11 @@ func (cfg *Config) doRequest(cli *http.Client, req *http.Request) (resp *http.Re
 	for _, h := range cfg.RequestHandlers {
 		req, err = h(req)
 		if err != nil {
-			break
+			return nil, err
 		}
 	}
 
-	if err == nil {
-		resp, err = cli.Do(req)
-	}
+	resp, err = cli.Do(req)
 
 	for _, h := range cfg.ResponseHandlers {
 		resp, err = h(resp, err)
